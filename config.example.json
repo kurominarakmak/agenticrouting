@@ -1,0 +1,51 @@
+{
+  "hermes_source": "~/.hermes/hermes-agent",
+  "hermes_commit": "9adc6071904dba099b667700f3ec177b3fb95eca",
+  "local_model": "lfm2.5-thinking:latest",
+  "codex": "codex",
+  "codex_model": "gpt-6.1-sol",
+  "timeout": 300,
+  "repositories": {
+    "demo": {
+      "path": "demo/repo",
+      "verify": ["python3", "demo/verify.py"]
+    }
+  },
+  "claude": "claude",
+  "enabled_harnesses": [
+    "codex-chatgpt",
+    "claude-subscription",
+    "glm-coding-plan"
+  ],
+  "max_attempts": 3,
+  "remote_origin": "",
+  "knowledge_roots": {
+    "project_notes": {
+      "path": "docs",
+      "share_frontier": true
+    },
+    "demo_repository": {
+      "path": "demo/repo",
+      "share_frontier": true
+    },
+    "personal_skills": {
+      "path": "~/.hermes/skills",
+      "share_frontier": false
+    }
+  },
+  "mcp_servers": {},
+  "prevent_idle_sleep": true,
+  "notification_webhook": {
+    "enabled": false,
+    "url": "",
+    "include_titles": false
+  },
+  "glm": {
+    "enabled": false,
+    "plan_entitlement_confirmed": false,
+    "base_url": "https://api.z.ai/api/anthropic",
+    "model": null,
+    "confirmed_plan_models": [],
+    "secret_file": "glm.json"
+  }
+}

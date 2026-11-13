@@ -1,0 +1,846 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Syntropic - Models &amp; Harnesses Registry</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&amp;family=JetBrains+Mono:wght@400;500;600&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+  tailwind.config = {
+    darkMode: "class",
+    theme: {
+      extend: {
+        "colors": {
+          "inverse-surface": "#e2e2e6",
+          "surface-container": "#1e2023",
+          "surface-bright": "#37393d",
+          "surface-container-high": "#282a2d",
+          "on-secondary-fixed-variant": "#005236",
+          "surface-tint": "#c0c1ff",
+          "outline-variant": "#464554",
+          "on-secondary-container": "#00311f",
+          "error": "#ffb4ab",
+          "on-secondary": "#003824",
+          "on-tertiary-fixed": "#001e2c",
+          "primary-fixed": "#e1e0ff",
+          "primary-container": "#8083ff",
+          "on-background": "#e2e2e6",
+          "on-secondary-fixed": "#002113",
+          "secondary": "#4edea3",
+          "outline": "#908fa0",
+          "secondary-container": "#00a572",
+          "surface-container-low": "#1a1c1f",
+          "on-tertiary-container": "#002d40",
+          "surface-variant": "#333538",
+          "tertiary-container": "#009bd1",
+          "secondary-fixed": "#6ffbbe",
+          "on-primary": "#1000a9",
+          "on-primary-fixed": "#07006c",
+          "on-error": "#690005",
+          "surface-container-highest": "#333538",
+          "surface-container-lowest": "#0c0e11",
+          "primary-fixed-dim": "#c0c1ff",
+          "on-primary-fixed-variant": "#2f2ebe",
+          "tertiary-fixed": "#c4e7ff",
+          "tertiary": "#7bd0ff",
+          "inverse-on-surface": "#2f3034",
+          "on-primary-container": "#0d0096",
+          "on-error-container": "#ffdad6",
+          "on-surface-variant": "#c7c4d7",
+          "inverse-primary": "#494bd6",
+          "surface-dim": "#111317",
+          "on-tertiary-fixed-variant": "#004c69",
+          "error-container": "#93000a",
+          "on-tertiary": "#00354a",
+          "secondary-fixed-dim": "#4edea3",
+          "surface": "#111317",
+          "tertiary-fixed-dim": "#7bd0ff",
+          "on-surface": "#e2e2e6",
+          "background": "#111317",
+          "primary": "#c0c1ff",
+          "gemini-bg": "#111317",
+          "gemini-surface": "#1a1c1f",
+          "gemini-surface-hover": "#282a2d",
+          "gemini-card": "#1e2023",
+          "gemini-border": "#282a2d",
+          "gemini-text-main": "#e2e2e6",
+          "gemini-text-sub": "#908fa0",
+          "gemini-blue": "#c0c1ff",
+          "gemini-emerald": "#4edea3"
+        },
+        "fontFamily": {
+          sans: ["Inter", "sans-serif"],
+          mono: ["JetBrains Mono", "monospace"]
+        }
+      }
+    }
+  }
+</script>
+<style>
+  @layer base {
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #111317;
+      color: #e2e2e6;
+      font-family: 'Inter', sans-serif;
+    }
+    ::-webkit-scrollbar {
+      width: 6px;
+      height: 6px;
+    }
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #282a2d;
+      border-radius: 9999px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: #37393d;
+    }
+  }
+</style>
+<meta content="web_dashboard" name="shell-type"/></head>
+<body class="bg-surface min-h-screen flex overflow-hidden antialiased selection:bg-primary/20 selection:text-primary">
+<!-- COLLAPSIBLE MINIMAL LEFT SIDEBAR (Gemini-style) -->
+<aside class="w-64 shrink-0 bg-surface-container-low border-r border-surface-container-high/60 flex flex-col justify-between p-3.5 z-40 transition-all duration-300" id="sidebar">
+<div class="flex flex-col gap-3">
+<!-- Top Logo / Collapse Trigger -->
+<div class="flex items-center justify-between px-2 pt-1 pb-1">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-primary/20 to-tertiary/20 border border-primary/30 flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-[19px]">spark</span>
+</div>
+<span class="font-medium text-sm tracking-tight text-on-surface">Syntropic</span>
+</div>
+<button class="p-1.5 text-on-surface-variant hover:text-white rounded-lg hover:bg-surface-container-high transition-colors" title="Collapse sidebar">
+<span class="material-symbols-outlined text-[18px]">left_panel_close</span>
+</button>
+</div>
+<!-- New Chat / Action Pill -->
+<button class="flex items-center gap-2.5 w-full py-2.5 px-3.5 mt-1 rounded-full bg-surface-container hover:bg-surface-container-high border border-outline-variant/30 text-sm font-medium text-on-surface transition-colors shadow-sm group">
+<span class="material-symbols-outlined text-lg text-primary group-hover:rotate-90 transition-transform">add</span>
+<span>New chat</span>
+</button>
+<!-- Navigation Links -->
+<nav class="flex flex-col gap-0.5 mt-2 text-xs">
+<!-- Active Section: Models & Harnesses -->
+<div class="px-3 py-1.5 text-[11px] font-medium tracking-wider uppercase text-outline">Registry &amp; Topology</div>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl bg-surface-container text-primary text-[13px] font-medium border border-primary/20 shadow-sm" href="#">
+<div class="flex items-center gap-2.5 truncate">
+<span class="material-symbols-outlined text-base text-primary">tune</span>
+<span class="truncate">Models &amp; Harnesses</span>
+</div>
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+</a>
+<div class="px-3 pt-3 py-1.5 text-[11px] font-medium tracking-wider uppercase text-outline">Recent</div>
+<!-- Unhighlighted Frontend Telemetry & MCP (clean, inactive state) -->
+<a class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-surface-container/60 text-on-surface-variant hover:text-on-surface text-[13px] transition-colors" href="#">
+<div class="flex items-center gap-2.5 truncate">
+<span class="material-symbols-outlined text-base text-outline">chat_bubble_outline</span>
+<span class="truncate">Frontend Telemetry &amp; MCP</span>
+</div>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-surface-container/60 text-on-surface-variant hover:text-on-surface text-[13px] transition-colors" href="#">
+<div class="flex items-center gap-2.5 truncate">
+<span class="material-symbols-outlined text-base text-outline">chat_bubble_outline</span>
+<span class="truncate">Mean Reversion Strategy</span>
+</div>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-surface-container/60 text-on-surface-variant hover:text-on-surface text-[13px] transition-colors" href="#">
+<div class="flex items-center gap-2.5 truncate">
+<span class="material-symbols-outlined text-base text-outline">chat_bubble_outline</span>
+<span class="truncate">Qwen 2.5 Coder Worktree</span>
+</div>
+</a>
+<!-- Workspace Orchestration Links -->
+<div class="px-3 pt-3.5 pb-1 text-[11px] font-medium tracking-wider uppercase text-outline">Workspace</div>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-surface-container/60 text-on-surface-variant hover:text-on-surface text-[13px] transition-colors" href="#">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-base text-outline">task_alt</span>
+<span>Tasks</span>
+</div>
+<span class="text-[11px] px-1.5 py-0.5 rounded-full bg-secondary/15 text-secondary font-medium">4 active</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-surface-container/60 text-on-surface-variant hover:text-on-surface text-[13px] transition-colors" href="#">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-base text-outline">auto_stories</span>
+<span>Knowledge</span>
+</div>
+<span class="text-[11px] text-outline">14 repos</span>
+</a>
+</nav>
+</div>
+<!-- Sidebar Bottom Profile & Settings -->
+<div class="pt-2 border-t border-surface-container-high/60 flex flex-col gap-1">
+<a class="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-surface-container-high text-on-surface-variant hover:text-white text-[13px] transition-colors" href="#">
+<span class="material-symbols-outlined text-base">settings</span>
+<span>Settings</span>
+</a>
+<div class="flex items-center justify-between px-2.5 py-2 mt-1 rounded-xl bg-surface-container">
+<div class="flex items-center gap-2">
+<img alt="Architect Admin" class="w-7 h-7 rounded-full object-cover ring-1 ring-surface-container-high" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_gHw5HQpDKOUkMAgGb25fwT0Y0u2tDSeSJNbXlJTlKwgM15BgEXaI_OIErEv6AouqtItZzcHDRv-ArCrHO9_mrLI-xPyII90d23Ea9CSXbG588UqSiFjSUE-D73BojMqPOxIi_LODQvsyyoJ2UlV86p8P2AEyBpc6cojUffQcRhYl3IcLrsudQqobL1l95ZElQhlWwm3GSORxKo77NBQZIY-jdOvhy8pbI2JUFGbQ"/>
+<div class="flex flex-col">
+<span class="text-xs font-medium text-on-surface">Architect</span>
+<span class="text-[11px] text-outline">Pro workspace</span>
+</div>
+</div>
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+</div>
+</div>
+</aside>
+<!-- MAIN CONTENT CONTAINER -->
+<div class="flex-1 flex flex-col h-screen relative bg-surface overflow-hidden">
+<!-- TOP BAR -->
+<header class="h-14 w-full shrink-0 flex items-center justify-between px-5 md:px-8 border-b border-surface-container-high/40 z-20 bg-surface/80 backdrop-blur-md">
+<!-- Left: Model Dropdown Selector -->
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-2 py-1.5 px-3 rounded-full hover:bg-surface-container text-on-surface transition-all text-sm font-medium">
+<span class="text-primary font-semibold tracking-tight text-[15px] flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[17px] text-primary">spark</span>
+Syntropic Auto
+</span>
+<span class="material-symbols-outlined text-base text-outline">expand_more</span>
+</button>
+</div>
+<!-- Right: Subdued Connection status & Profile -->
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-surface-container border border-surface-container-high/80 text-xs text-on-surface-variant">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+<span class="font-normal text-[12px] text-on-surface">Home Rig RTX 4090</span>
+</div>
+<button class="w-8 h-8 rounded-full hover:bg-surface-container text-on-surface-variant hover:text-white flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-lg">tune</span>
+</button>
+<img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-1 ring-surface-container-high" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_gHw5HQpDKOUkMAgGb25fwT0Y0u2tDSeSJNbXlJTlKwgM15BgEXaI_OIErEv6AouqtItZzcHDRv-ArCrHO9_mrLI-xPyII90d23Ea9CSXbG588UqSiFjSUE-D73BojMqPOxIi_LODQvsyyoJ2UlV86p8P2AEyBpc6cojUffQcRhYl3IcLrsudQqobL1l95ZElQhlWwm3GSORxKo77NBQZIY-jdOvhy8pbI2JUFGbQ"/>
+</div>
+</header>
+<!-- REGISTRY CONTENT STREAM -->
+<main class="flex-1 overflow-y-auto px-4 md:px-8 pt-6 pb-48">
+<div class="w-full max-w-4xl mx-auto flex flex-col gap-9 pb-12">
+<!-- Main Header -->
+<div class="flex flex-col gap-2">
+<div class="flex items-center gap-2 flex-wrap">
+<span class="font-mono text-[10px] text-tertiary uppercase tracking-wider bg-surface-container px-2 py-0.5 rounded-full border border-tertiary/20">System Registry</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="text-xs text-secondary flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary animate-pulse"></span>
+      3 Active Harnesses · 4 Engines Online
+    </span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-mono text-[11px] text-primary bg-surface-container-low px-2 py-0.5 rounded-full border border-primary/20">Zero-Spend Enforced</span>
+</div>
+<h1 class="text-2xl md:text-3xl font-semibold text-on-surface tracking-tight">Models &amp; Harnesses Registry</h1>
+<p class="text-sm md:text-base text-on-surface-variant max-w-2xl leading-relaxed">
+    Subscription-aware routing, runtime compatibility, and zero-spend local fallback.
+  </p>
+</div>
+<!-- SECTION 1: AGENT HARNESSES -->
+<section class="flex flex-col gap-3.5">
+<div class="flex items-center justify-between px-0.5 flex-wrap gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-mono text-xs text-primary bg-surface-container px-2 py-0.5 rounded-md font-medium">01</span>
+<h2 class="text-lg font-semibold text-on-surface tracking-tight">Agent Harnesses</h2>
+</div>
+<p class="text-xs text-on-surface-variant mt-0.5">Execution environments wrapping conversational CLIs and local runners</p>
+</div>
+<span class="text-xs font-mono text-secondary bg-surface-container px-2.5 py-1 rounded-full border border-surface-container-high flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+      3 Active
+    </span>
+</div>
+<div class="flex flex-col gap-2.5">
+<!-- Harness 1: Codex CLI -->
+<div class="bg-surface-container rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3.5 hover:bg-surface-container-high transition-colors border border-surface-container-high/60">
+<div class="flex items-start md:items-center gap-3.5 min-w-0">
+<div class="w-10 h-10 rounded-xl bg-surface-container-highest flex items-center justify-center shrink-0 text-primary">
+<span class="material-symbols-outlined text-xl">terminal</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2 flex-wrap">
+<span class="font-medium text-sm text-on-surface">Codex CLI</span>
+<span class="font-mono text-[11px] text-outline bg-surface-container-lowest px-2 py-0.5 rounded">v0.9.4</span>
+<span class="text-[11px] text-secondary bg-secondary/10 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+              Active
+            </span>
+<span class="text-[11px] text-on-surface-variant bg-surface-container-lowest px-2 py-0.5 rounded">Sandboxed</span>
+<span class="font-mono text-[11px] text-tertiary bg-surface-container-lowest px-2 py-0.5 rounded">Node/Bun</span>
+</div>
+<span class="text-xs text-on-surface-variant mt-1">Verified with GPT-4o &amp; Qwen · AST patch synthesis &amp; diff piping</span>
+</div>
+</div>
+<div class="flex items-center justify-end gap-2 shrink-0">
+<span class="font-mono text-xs text-secondary bg-surface-container-lowest px-2.5 py-1 rounded-full flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm text-secondary">verified</span>
+          Verified
+        </span>
+<button class="px-3 py-1.5 rounded-full bg-surface-container-highest hover:bg-surface-variant text-on-surface text-xs font-medium transition-colors">
+          Configure
+        </button>
+</div>
+</div>
+<!-- Harness 2: Claude Code -->
+<div class="bg-surface-container rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3.5 hover:bg-surface-container-high transition-colors border border-surface-container-high/60">
+<div class="flex items-start md:items-center gap-3.5 min-w-0">
+<div class="w-10 h-10 rounded-xl bg-surface-container-highest flex items-center justify-center shrink-0 text-tertiary">
+<span class="material-symbols-outlined text-xl">code_blocks</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2 flex-wrap">
+<span class="font-medium text-sm text-on-surface">Claude Code</span>
+<span class="font-mono text-[11px] text-outline bg-surface-container-lowest px-2 py-0.5 rounded">v1.2.0</span>
+<span class="text-[11px] text-secondary bg-secondary/10 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+              Active
+            </span>
+<span class="text-[11px] text-on-surface-variant bg-surface-container-lowest px-2 py-0.5 rounded">Worktree-isolated</span>
+</div>
+<span class="text-xs text-on-surface-variant mt-1">Verified with Claude 3.7 Sonnet · Multi-file git dependency walker</span>
+</div>
+</div>
+<div class="flex items-center justify-end gap-2 shrink-0">
+<span class="font-mono text-xs text-secondary bg-surface-container-lowest px-2.5 py-1 rounded-full flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm text-secondary">verified</span>
+          Verified
+        </span>
+<button class="px-3 py-1.5 rounded-full bg-surface-container-highest hover:bg-surface-variant text-on-surface text-xs font-medium transition-colors">
+          Configure
+        </button>
+</div>
+</div>
+<!-- Harness 3: Local Rig Runner -->
+<div class="bg-surface-container rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-3.5 hover:bg-surface-container-high transition-colors border border-surface-container-high/60">
+<div class="flex items-start md:items-center gap-3.5 min-w-0">
+<div class="w-10 h-10 rounded-xl bg-surface-container-highest flex items-center justify-center shrink-0 text-secondary">
+<span class="material-symbols-outlined text-xl">memory</span>
+</div>
+<div class="flex flex-col min-w-0">
+<div class="flex items-center gap-2 flex-wrap">
+<span class="font-medium text-sm text-on-surface">Local Rig Runner</span>
+<span class="font-mono text-[11px] text-secondary bg-surface-container-lowest px-2 py-0.5 rounded">Ollama daemon</span>
+<span class="text-[11px] text-secondary bg-secondary/10 px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+              Active
+            </span>
+<span class="text-[11px] text-secondary bg-surface-container-lowest px-2 py-0.5 rounded font-mono">0-metered local compute</span>
+</div>
+<span class="text-xs text-on-surface-variant mt-1">100% on-premises runner · Unix socket IPC hardware-isolated on local RTX 4090</span>
+</div>
+</div>
+<div class="flex items-center justify-end gap-2 shrink-0">
+<span class="font-mono text-xs text-secondary bg-surface-container-lowest px-2.5 py-1 rounded-full flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+          Zero Cost
+        </span>
+<button class="px-3 py-1.5 rounded-full bg-surface-container-highest hover:bg-surface-variant text-on-surface text-xs font-medium transition-colors">
+          Configure
+        </button>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 2: MODELS & ENGINES -->
+<section class="flex flex-col gap-3.5">
+<div class="flex items-center justify-between px-0.5 flex-wrap gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-mono text-xs text-primary bg-surface-container px-2 py-0.5 rounded-md font-medium">02</span>
+<h2 class="text-lg font-semibold text-on-surface tracking-tight">Models &amp; Engines</h2>
+</div>
+<p class="text-xs text-on-surface-variant mt-0.5">Frontier API endpoints and quantized on-premises neural checkpoints</p>
+</div>
+<span class="text-xs font-mono text-outline bg-surface-container px-2.5 py-1 rounded-full">4 Models Configured</span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+<!-- Model 1: Qwen 2.5 Coder 32B -->
+<div class="bg-surface-container rounded-xl p-4.5 flex flex-col justify-between gap-3.5 border border-surface-container-high/60 hover:bg-surface-container-high transition-colors">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-xl bg-surface-container-highest flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-lg">psychology</span>
+</div>
+<div>
+<h3 class="font-medium text-sm text-on-surface">Qwen 2.5 Coder 32B</h3>
+<span class="font-mono text-[10px] text-secondary uppercase tracking-wider">Local 4-bit GGUF · RTX 4090 24GB</span>
+</div>
+</div>
+<span class="font-mono text-[11px] text-secondary bg-surface-container-lowest px-2 py-0.5 rounded-md font-medium">Zero cost</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+        Primary code completion and unit-level refactoring model loaded in local VRAM with zero latency jitter.
+      </p>
+<div class="flex items-center justify-between pt-2 border-t border-surface-container-high/60 text-xs font-mono">
+<span class="text-secondary flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm">speed</span>
+          64 t/s · Latency 0.12s
+        </span>
+<span class="text-outline">18.2 GB VRAM</span>
+</div>
+</div>
+<!-- Model 2: Claude 3.7 Sonnet -->
+<div class="bg-surface-container rounded-xl p-4.5 flex flex-col justify-between gap-3.5 border border-surface-container-high/60 hover:bg-surface-container-high transition-colors">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-xl bg-surface-container-highest flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-lg">network_intelligence</span>
+</div>
+<div>
+<h3 class="font-medium text-sm text-on-surface">Claude 3.7 Sonnet</h3>
+<span class="font-mono text-[10px] text-tertiary uppercase tracking-wider">Anthropic API / Claude Pro</span>
+</div>
+</div>
+<span class="font-mono text-[11px] text-tertiary bg-surface-container-lowest px-2 py-0.5 rounded-md font-medium">High reasoning</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+        Active for complex refactors, deep architectural planning, multi-file code review, and full system analysis.
+      </p>
+<div class="flex items-center justify-between pt-2 border-t border-surface-container-high/60 text-xs font-mono">
+<span class="text-on-surface flex items-center gap-1.5">
+<span class="material-symbols-outlined text-sm text-tertiary">smart_toy</span>
+          Extended Thinking
+        </span>
+<span class="text-secondary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+          Active
+        </span>
+</div>
+</div>
+<!-- Model 3: GPT-4o -->
+<div class="bg-surface-container rounded-xl p-4.5 flex flex-col justify-between gap-3.5 border border-surface-container-high/60 hover:bg-surface-container-high transition-colors">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-xl bg-surface-container-highest flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-lg">neurology</span>
+</div>
+<div>
+<h3 class="font-medium text-sm text-on-surface">GPT-4o</h3>
+<span class="font-mono text-[10px] text-primary uppercase tracking-wider">OpenAI API / ChatGPT Plus</span>
+</div>
+</div>
+<span class="font-mono text-[11px] text-primary bg-surface-container-lowest px-2 py-0.5 rounded-md font-medium">Fast runner</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+        Verified fast coding runner for high-throughput AST generation, diff inspection, and rapid conversational ideation.
+      </p>
+<div class="flex items-center justify-between pt-2 border-t border-surface-container-high/60 text-xs font-mono">
+<span class="text-on-surface-variant">128k context</span>
+<span class="text-secondary flex items-center gap-1">
+<span class="material-symbols-outlined text-xs text-secondary">verified</span>
+          Verified Runner
+        </span>
+</div>
+</div>
+<!-- Model 4: DeepSeek R1 14B -->
+<div class="bg-surface-container rounded-xl p-4.5 flex flex-col justify-between gap-3.5 border border-surface-container-high/60 hover:bg-surface-container-high transition-colors">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-9 h-9 rounded-xl bg-surface-container-highest flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-lg">account_tree</span>
+</div>
+<div>
+<h3 class="font-medium text-sm text-on-surface">DeepSeek R1 14B</h3>
+<span class="font-mono text-[10px] text-secondary uppercase tracking-wider">Local Ollama · Distilled Reasoning</span>
+</div>
+</div>
+<span class="font-mono text-[11px] text-secondary bg-surface-container-lowest px-2 py-0.5 rounded-md font-medium">Zero egress</span>
+</div>
+<p class="text-xs text-on-surface-variant leading-relaxed">
+        Self-contained chain-of-thought verification model running on local hardware for offline reasoning tasks.
+      </p>
+<div class="flex items-center justify-between pt-2 border-t border-surface-container-high/60 text-xs font-mono">
+<span class="text-secondary">Zero Egress · Local</span>
+<span class="text-outline">On-Premises</span>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 3: SUBSCRIPTIONS & QUOTA -->
+<section class="flex flex-col gap-3.5">
+<div class="flex items-center justify-between px-0.5 flex-wrap gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-mono text-xs text-primary bg-surface-container px-2 py-0.5 rounded-md font-medium">03</span>
+<h2 class="text-lg font-semibold text-on-surface tracking-tight">Subscriptions &amp; Quota</h2>
+</div>
+<p class="text-xs text-on-surface-variant mt-0.5">Monitoring usage cycles and provider bounds to maintain zero-spend guarantee</p>
+</div>
+<span class="text-xs font-mono text-secondary bg-surface-container px-2.5 py-1 rounded-full border border-surface-container-high flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+      Budget Guard Active
+    </span>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+<!-- Plan 1: ChatGPT Plus -->
+<div class="bg-surface-container rounded-xl p-4.5 flex flex-col justify-between gap-3.5 border border-surface-container-high/60">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-base">donut_large</span>
+</div>
+<div>
+<h3 class="font-medium text-sm text-on-surface">ChatGPT Plus</h3>
+<span class="font-mono text-[10px] text-outline uppercase">OpenAI Subscription</span>
+</div>
+</div>
+<span class="font-mono text-[10px] text-secondary bg-surface-container-lowest px-2 py-0.5 rounded">Pro Active</span>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between text-xs">
+<span class="text-on-surface-variant">Rolling Window</span>
+<span class="font-mono text-primary font-semibold">42 / 50 messages</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-primary rounded-full transition-all duration-300" style="width: 84%"></div>
+</div>
+<div class="flex items-center justify-between text-[11px] font-mono text-outline pt-0.5">
+<span>Resets in 1h 45m</span>
+<span class="text-secondary">8 msgs headroom</span>
+</div>
+</div>
+</div>
+<!-- Plan 2: Claude Pro Subscription -->
+<div class="bg-surface-container rounded-xl p-4.5 flex flex-col justify-between gap-3.5 border border-surface-container-high/60">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-base">hourglass_top</span>
+</div>
+<div>
+<h3 class="font-medium text-sm text-on-surface">Claude Pro Subscription</h3>
+<span class="font-mono text-[10px] text-outline uppercase">Anthropic Account</span>
+</div>
+</div>
+<span class="font-mono text-[10px] text-tertiary bg-surface-container-lowest px-2 py-0.5 rounded">Tier 1</span>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between text-xs">
+<span class="text-on-surface-variant">Consumption State</span>
+<span class="font-mono text-xs text-on-surface-variant bg-surface-container-lowest px-2 py-0.5 rounded border border-surface-container-high font-medium">Quota: Unknown</span>
+</div>
+<p class="text-[11px] text-outline leading-tight">
+          Provider conceals real-time message counter; rate-limit fallback active.
+        </p>
+<div class="flex items-center justify-between text-[11px] font-mono pt-1 text-secondary">
+<span class="flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+            Operational
+          </span>
+<span class="text-outline">Socket safe</span>
+</div>
+</div>
+</div>
+<!-- Plan 3: Local Home Rig -->
+<div class="bg-surface-container rounded-xl p-4.5 flex flex-col justify-between gap-3.5 border border-surface-container-high/60">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-base">all_inclusive</span>
+</div>
+<div>
+<h3 class="font-medium text-sm text-on-surface">Local Home Rig</h3>
+<span class="font-mono text-[10px] text-outline uppercase">On-Premises Dedicated</span>
+</div>
+</div>
+<span class="font-mono text-[10px] text-secondary bg-surface-container-lowest px-2 py-0.5 rounded">Unlimited</span>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between text-xs">
+<span class="text-on-surface-variant">Monthly Allocation</span>
+<span class="font-mono text-secondary font-semibold">Unlimited / Free</span>
+</div>
+<div class="w-full h-1.5 bg-secondary/30 rounded-full overflow-hidden">
+<div class="h-full bg-secondary rounded-full" style="width: 100%"></div>
+</div>
+<div class="flex items-center justify-between text-[11px] font-mono text-outline pt-0.5">
+<span class="text-secondary font-medium">Zero cloud egress</span>
+<span>$0.00 cost</span>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- SECTION 4: LOCAL HARDWARE & RIG TELEMETRY -->
+<section class="flex flex-col gap-3.5">
+<div class="flex items-center justify-between px-0.5 flex-wrap gap-2">
+<div>
+<div class="flex items-center gap-2">
+<span class="font-mono text-xs text-primary bg-surface-container px-2 py-0.5 rounded-md font-medium">04</span>
+<h2 class="text-lg font-semibold text-on-surface tracking-tight">Local Hardware &amp; Rig Telemetry</h2>
+</div>
+<p class="text-xs text-on-surface-variant mt-0.5">Real-time local hardware utilization and deterministic billing guardrails</p>
+</div>
+<div class="flex items-center gap-2">
+<span class="w-2 h-2 rounded-full bg-secondary"></span>
+<span class="font-mono text-xs text-secondary">Rig Operational</span>
+</div>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+<!-- Stat 1: RTX 4090 24GB VRAM -->
+<div class="bg-surface-container rounded-xl p-4.5 flex flex-col justify-between gap-3.5 border border-surface-container-high/60">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-base">memory</span>
+</div>
+<div>
+<h3 class="font-medium text-sm text-on-surface">RTX 4090 24GB</h3>
+<span class="font-mono text-[10px] text-outline uppercase">Dedicated VRAM</span>
+</div>
+</div>
+<span class="font-mono text-xs text-secondary bg-surface-container-lowest px-2 py-0.5 rounded">75.8%</span>
+</div>
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between text-xs">
+<span class="text-on-surface-variant font-mono">18.2 / 24.0 GB</span>
+<span class="text-[11px] text-secondary font-mono">Qwen 32B loaded</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden">
+<div class="h-full bg-secondary rounded-full" style="width: 75.8%"></div>
+</div>
+<div class="flex items-center justify-between text-[11px] font-mono text-outline">
+<span>Allocated: 18.2 GB</span>
+<span>Free: 5.8 GB</span>
+</div>
+</div>
+</div>
+<!-- Stat 2: CPU / RAM -->
+<div class="bg-surface-container rounded-xl p-4.5 flex flex-col justify-between gap-3.5 border border-surface-container-high/60">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-tertiary">
+<span class="material-symbols-outlined text-base">developer_board</span>
+</div>
+<div>
+<h3 class="font-medium text-sm text-on-surface">CPU / RAM</h3>
+<span class="font-mono text-[10px] text-outline uppercase">Host Compute</span>
+</div>
+</div>
+<span class="font-mono text-xs text-tertiary bg-surface-container-lowest px-2 py-0.5 rounded">24% load</span>
+</div>
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between text-xs text-on-surface font-mono">
+<span>AMD Ryzen 9 7950X</span>
+<span class="text-tertiary">16C / 32T</span>
+</div>
+<div class="flex items-center justify-between text-xs text-on-surface-variant font-mono">
+<span>64GB DDR5 Memory</span>
+<span>15.4 GB in use</span>
+</div>
+<div class="w-full h-1.5 bg-surface-container-highest rounded-full overflow-hidden mt-1">
+<div class="h-full bg-tertiary rounded-full" style="width: 24%"></div>
+</div>
+</div>
+</div>
+<!-- Stat 3: Billing Enforcer -->
+<div class="bg-surface-container rounded-xl p-4.5 flex flex-col justify-between gap-3.5 border border-surface-container-high/60">
+<div class="flex items-start justify-between">
+<div class="flex items-center gap-2">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-secondary">
+<span class="material-symbols-outlined text-base">shield</span>
+</div>
+<div>
+<h3 class="font-medium text-sm text-on-surface">Billing Enforcer</h3>
+<span class="font-mono text-[10px] text-outline uppercase">Cost Controller</span>
+</div>
+</div>
+<span class="font-mono text-xs text-secondary bg-surface-container-lowest px-2 py-0.5 rounded flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+          Armed
+        </span>
+</div>
+<div class="flex flex-col gap-1.5">
+<div class="flex items-center justify-between text-xs font-mono">
+<span class="text-on-surface-variant">Hard cap:</span>
+<span class="text-secondary font-semibold">$0.00</span>
+</div>
+<p class="text-xs text-on-surface font-medium">Local-first priority enforced</p>
+<p class="text-[11px] text-outline leading-tight">
+          Unmetered API calls blocked at socket level. Automatic downgrade to home rig on limit reach.
+        </p>
+</div>
+</div>
+</div>
+</section>
+<!-- EXPANDABLE ROUTING EXPLANATION & TIER MATRIX -->
+<details class="group bg-surface-container rounded-xl overflow-hidden border border-surface-container-high/70 transition-all" open="">
+<summary class="cursor-pointer p-4 md:px-5 flex items-center justify-between hover:bg-surface-container-high transition-colors list-none select-none">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary">
+<span class="material-symbols-outlined text-lg">schema</span>
+</div>
+<div>
+<h3 class="font-medium text-sm text-on-surface">Routing Explanation &amp; Tier Matrix</h3>
+<p class="text-xs text-on-surface-variant">Why models and harnesses are selected based on task complexity, prompt classification, and available quota</p>
+</div>
+</div>
+<span class="material-symbols-outlined text-outline text-xl transition-transform group-open:rotate-180">expand_more</span>
+</summary>
+<div class="px-5 pb-5 pt-3 border-t border-surface-container-high/60 flex flex-col gap-4">
+<!-- Rationale Cards -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+<div class="bg-surface-container-lowest p-3.5 rounded-lg border border-surface-container-high/40">
+<span class="font-mono text-[10px] text-secondary uppercase font-semibold">Tier 1 · Local-First Routing</span>
+<p class="text-xs text-on-surface-variant mt-1.5 leading-relaxed">
+          Single-file modifications, tests, shell commands, and syntax validation route directly to <strong>Qwen 2.5 Coder 32B</strong> on the RTX 4090 at zero cost.
+        </p>
+</div>
+<div class="bg-surface-container-lowest p-3.5 rounded-lg border border-surface-container-high/40">
+<span class="font-mono text-[10px] text-tertiary uppercase font-semibold">Tier 2 · Architectural Reasoning</span>
+<p class="text-xs text-on-surface-variant mt-1.5 leading-relaxed">
+          Cross-module refactoring and dependency audits invoke <strong>Claude Code with Sonnet 3.7</strong> via Claude Pro subscription until rolling limits hit.
+        </p>
+</div>
+<div class="bg-surface-container-lowest p-3.5 rounded-lg border border-surface-container-high/40">
+<span class="font-mono text-[10px] text-primary uppercase font-semibold">Tier 3 · Zero-Spend Fallback</span>
+<p class="text-xs text-on-surface-variant mt-1.5 leading-relaxed">
+          If ChatGPT Plus reaches &lt; 5 msgs or Claude returns unknown quota boundaries, traffic instantly falls back to local <strong>DeepSeek R1 14B</strong> with on-prem reasoning traces.
+        </p>
+</div>
+</div>
+<!-- Matrix Table -->
+<div class="overflow-x-auto">
+<table class="w-full text-left text-xs text-on-surface-variant">
+<thead class="border-b border-surface-container-high/70 font-mono text-[10px] uppercase text-outline">
+<tr>
+<th class="py-2.5 px-3">Harness &amp; Model Pair</th>
+<th class="py-2.5 px-3">Task Specialization</th>
+<th class="py-2.5 px-3">Reasoning Depth</th>
+<th class="py-2.5 px-3">Quota Impact</th>
+<th class="py-2.5 px-3">Fallback Target</th>
+</tr>
+</thead>
+<tbody class="divide-y divide-surface-container-high/40">
+<tr>
+<td class="py-3 px-3 font-medium text-on-surface flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-tertiary"></span>
+              Claude Code + Sonnet 3.7
+            </td>
+<td class="py-3 px-3">Multi-file Git worktree refactoring &amp; AST sync</td>
+<td class="py-3 px-3 text-tertiary font-mono">High (Extended Thinking)</td>
+<td class="py-3 px-3 font-mono">Claude Pro (Quota: Unknown)</td>
+<td class="py-3 px-3 text-secondary font-mono">Local Runner (Qwen 32B)</td>
+</tr>
+<tr>
+<td class="py-3 px-3 font-medium text-on-surface flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-primary"></span>
+              Codex CLI + GPT-4o
+            </td>
+<td class="py-3 px-3">Rapid conversational coding &amp; prototype generation</td>
+<td class="py-3 px-3 text-primary font-mono">High (Verified runner)</td>
+<td class="py-3 px-3 font-mono">42 / 50 msgs (Resets 1h 45m)</td>
+<td class="py-3 px-3 text-secondary font-mono">Local Runner (Qwen 32B)</td>
+</tr>
+<tr>
+<td class="py-3 px-3 font-medium text-on-surface flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+              Local Rig Runner + Qwen 32B
+            </td>
+<td class="py-3 px-3">Autocomplete, incremental patches &amp; unit tests</td>
+<td class="py-3 px-3 text-secondary font-mono">Medium-High (4-bit GGUF)</td>
+<td class="py-3 px-3 text-secondary font-semibold font-mono">0.00 / Unlimited Free</td>
+<td class="py-3 px-3 text-outline font-mono">Terminal Local</td>
+</tr>
+<tr>
+<td class="py-3 px-3 font-medium text-on-surface flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+              Local Runner + DeepSeek R1
+            </td>
+<td class="py-3 px-3">Offline logic verification &amp; math validation</td>
+<td class="py-3 px-3 text-secondary font-mono">Extreme (Distilled CoT)</td>
+<td class="py-3 px-3 text-secondary font-semibold font-mono">0.00 / Zero Egress</td>
+<td class="py-3 px-3 text-outline font-mono">Home Rig Offline</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</details>
+<!-- Ambient Footer Note -->
+<div class="flex items-center justify-between p-3.5 px-4 rounded-xl bg-surface-container border border-surface-container-high/60 text-on-surface-variant text-xs">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-secondary text-base">verified_user</span>
+<span>Deterministic zero-spend architecture: Socket firewall actively blocks all unmetered frontier invocations.</span>
+</div>
+<span class="font-mono text-[11px] text-outline">syntropic-daemon v2.4.9</span>
+</div>
+</div>
+</main>
+<!-- FLOATING GEMINI-STYLE PROMPT COMPOSER -->
+<div class="absolute bottom-0 left-0 right-0 z-30 pointer-events-none pb-5 pt-8 bg-gradient-to-t from-surface via-surface/95 to-transparent px-4 md:px-8">
+<div class="w-full max-w-3xl mx-auto flex flex-col gap-2.5 pointer-events-auto">
+<!-- Suggestion Chips -->
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+<button class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container/90 hover:bg-surface-container border border-surface-container-high text-xs text-on-surface transition-all">
+<span class="material-symbols-outlined text-[15px] text-primary">show_chart</span>
+<span>Backtest strategy</span>
+</button>
+<button class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container/90 hover:bg-surface-container border border-surface-container-high text-xs text-on-surface transition-all">
+<span class="material-symbols-outlined text-[15px] text-secondary">folder_open</span>
+<span>Audit git worktree</span>
+</button>
+<button class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-surface-container/90 hover:bg-surface-container border border-surface-container-high text-xs text-on-surface transition-all">
+<span class="material-symbols-outlined text-[15px] text-primary">sync_alt</span>
+<span>Switch model route</span>
+</button>
+</div>
+<!-- Floating Pill Input Box -->
+<div class="bg-surface-container/95 hover:bg-surface-container focus-within:bg-surface-container border border-surface-container-high focus-within:border-outline-variant rounded-3xl p-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-all">
+<div class="px-3 pt-1">
+<textarea class="w-full bg-transparent border-0 text-[15px] text-on-surface placeholder:text-outline focus:ring-0 focus:outline-none resize-none p-0 leading-relaxed font-sans" id="prompt-input" placeholder="Ask anything, route code, or trigger harness refactor..." rows="1"></textarea>
+</div>
+<div class="flex items-center justify-between pt-2 px-1">
+<!-- Left Controls inside Input -->
+<div class="flex items-center gap-1">
+<button class="p-2 text-on-surface-variant hover:text-white rounded-full hover:bg-surface-container-high transition-colors" title="Attach file or code">
+<span class="material-symbols-outlined text-xl">add</span>
+</button>
+<button class="flex items-center gap-1.5 py-1 px-2.5 text-xs text-on-surface-variant hover:text-white rounded-full hover:bg-surface-container-high transition-colors">
+<span class="material-symbols-outlined text-sm text-primary">tune</span>
+<span>Auto-Route</span>
+</button>
+</div>
+<!-- Right Controls (Mic & Send Pill) -->
+<div class="flex items-center gap-1">
+<button class="p-2 text-on-surface-variant hover:text-white rounded-full hover:bg-surface-container-high transition-colors" title="Voice mode">
+<span class="material-symbols-outlined text-xl">mic</span>
+</button>
+<button class="w-9 h-9 rounded-full bg-on-surface text-surface hover:bg-white flex items-center justify-center transition-all disabled:opacity-30 active:scale-95" title="Send message">
+<span class="material-symbols-outlined text-lg font-bold">arrow_upward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Micro Privacy Guarantee -->
+<div class="text-center text-[11px] text-outline">
+  Syntropic runs tasks locally on your home rig. Zero cloud egress unless frontier models are invoked.
+</div>
+</div>
+</div>
+</div>
+<script>
+  const textarea = document.getElementById('prompt-input');
+  if (textarea) {
+    textarea.addEventListener('input', function() {
+      this.style.height = 'auto';
+      this.style.height = Math.min(this.scrollHeight, 160) + 'px';
+    });
+    textarea.addEventListener('keydown', function(e) {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        if (this.value.trim().length > 0) {
+          this.value = '';
+          this.style.height = 'auto';
+        }
+      }
+    });
+  }
+</script>
+</body></html>

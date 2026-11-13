@@ -1,0 +1,364 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Syntropic Chat</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "gemini-bg": "#131314",
+            "gemini-surface": "#1e1f20",
+            "gemini-surface-hover": "#282a2c",
+            "gemini-card": "#18191b",
+            "gemini-border": "#2d2f31",
+            "gemini-text-main": "#e3e3e3",
+            "gemini-text-sub": "#8e918f",
+            "gemini-blue": "#a8c7fa",
+            "gemini-accent": "#c2e7ff",
+            "gemini-glow": "#7cacf8",
+            "gemini-emerald": "#6dd58c"
+          },
+          fontFamily: {
+            sans: ["Inter", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #131314;
+        color: #e3e3e3;
+        font-family: 'Inter', sans-serif;
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #282a2c;
+        border-radius: 9999px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #3b3d40;
+      }
+    }
+  </style>
+<meta content="web_dashboard" name="shell-type"></head>
+<body class="bg-gemini-bg min-h-screen flex overflow-hidden antialiased selection:bg-gemini-blue/20 selection:text-gemini-blue">
+<!-- COLLAPSIBLE MINIMAL LEFT SIDEBAR (Gemini-style) -->
+<aside class="w-64 shrink-0 bg-gemini-surface border-r border-gemini-border/60 flex flex-col justify-between p-3.5 z-40 transition-all duration-300" id="sidebar">
+<div class="flex flex-col gap-3">
+<!-- Top Logo / Collapse Trigger -->
+
+<!-- New Chat / Action Pill -->
+<button class="flex items-center gap-2.5 w-full py-2.5 px-3.5 mt-1 rounded-full bg-gemini-card hover:bg-gemini-surface-hover border border-gemini-border text-sm font-medium text-gemini-text-main transition-colors shadow-sm group">
+<span class="material-symbols-outlined text-lg text-gemini-blue group-hover:rotate-90 transition-transform">add</span>
+<span>New chat</span>
+</button>
+<!-- Navigation Links -->
+<nav class="flex flex-col gap-0.5 mt-2 text-xs">
+<div class="px-3 py-1.5 text-[11px] font-medium tracking-wider uppercase text-gemini-text-sub">Recent</div>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl bg-gemini-surface-hover text-white text-[13px] font-medium group transition-colors" href="#">
+<div class="flex items-center gap-2.5 truncate">
+<span class="material-symbols-outlined text-base text-gemini-blue">chat_bubble</span>
+<span class="truncate">Frontend Telemetry &amp; MCP</span>
+</div>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gemini-surface-hover/70 text-gemini-text-sub hover:text-gemini-text-main text-[13px] transition-colors" href="#">
+<div class="flex items-center gap-2.5 truncate">
+<span class="material-symbols-outlined text-base">chat_bubble_outline</span>
+<span class="truncate">Mean Reversion Strategy</span>
+</div>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gemini-surface-hover/70 text-gemini-text-sub hover:text-gemini-text-main text-[13px] transition-colors" href="#">
+<div class="flex items-center gap-2.5 truncate">
+<span class="material-symbols-outlined text-base">chat_bubble_outline</span>
+<span class="truncate">Qwen 2.5 Coder Worktree</span>
+</div>
+</a>
+<!-- Workspace Orchestration Links -->
+<div class="px-3 pt-4 pb-1 text-[11px] font-medium tracking-wider uppercase text-gemini-text-sub">Workspace</div>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gemini-surface-hover/70 text-gemini-text-sub hover:text-gemini-text-main text-[13px] transition-colors" href="#">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-base">task_alt</span>
+<span>Tasks</span>
+</div>
+<span class="text-[11px] px-1.5 py-0.5 rounded-full bg-gemini-emerald/15 text-gemini-emerald font-medium">4 active</span>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gemini-surface-hover/70 text-gemini-text-sub hover:text-gemini-text-main text-[13px] transition-colors" href="#">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-base">auto_stories</span>
+<span>Knowledge</span>
+</div>
+<span class="text-[11px] text-gemini-text-sub">14 repos</span>
+</a>
+</nav>
+</div>
+<!-- Sidebar Bottom Profile & Settings -->
+<div class="pt-2 border-t border-gemini-border/60 flex flex-col gap-1">
+<a class="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-gemini-surface-hover text-gemini-text-sub hover:text-white text-[13px] transition-colors" href="#">
+<span class="material-symbols-outlined text-base">settings</span>
+<span>Settings</span>
+</a>
+<div class="flex items-center justify-between px-2.5 py-2 mt-1 rounded-xl bg-gemini-card/60">
+<div class="flex items-center gap-2">
+<img alt="Architect Admin" class="w-7 h-7 rounded-full object-cover ring-1 ring-gemini-border" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_gHw5HQpDKOUkMAgGb25fwT0Y0u2tDSeSJNbXlJTlKwgM15BgEXaI_OIErEv6AouqtItZzcHDRv-ArCrHO9_mrLI-xPyII90d23Ea9CSXbG588UqSiFjSUE-D73BojMqPOxIi_LODQvsyyoJ2UlV86p8P2AEyBpc6cojUffQcRhYl3IcLrsudQqobL1l95ZElQhlWwm3GSORxKo77NBQZIY-jdOvhy8pbI2JUFGbQ">
+<div class="flex flex-col">
+<span class="text-xs font-medium text-gemini-text-main">Architect</span>
+<span class="text-[11px] text-gemini-text-sub">Pro workspace</span>
+</div>
+</div>
+<span class="w-2 h-2 rounded-full bg-gemini-emerald"></span>
+</div>
+</div>
+</aside>
+<!-- MAIN CHAT CONTAINER -->
+<div class="flex-1 flex flex-col h-screen relative bg-gemini-bg overflow-hidden">
+<!-- CLEAN MINIMAL TOP BAR (Gemini-style) -->
+<header class="h-14 w-full shrink-0 flex items-center justify-between px-5 md:px-8 border-b border-transparent z-20">
+<!-- Left: Model Dropdown Selector -->
+
+<!-- Right: Subdued Connection status & Profile -->
+<div class="flex items-center gap-3">
+
+<button class="w-8 h-8 rounded-full hover:bg-gemini-surface text-gemini-text-sub hover:text-white flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-lg">tune</span>
+</button>
+
+</div>
+</header>
+<!-- CONVERSATION STREAM (Spacious & Airy) -->
+<main class="flex-1 overflow-y-auto px-4 md:px-6 pt-2 pb-56"><div class="flex flex-col w-full max-w-5xl mx-auto px-2 md:px-4 pb-20">
+<!-- HEADER & INTRO: Spacious, calming & authoritative -->
+<section class="flex flex-col gap-2 pt-4 pb-8">
+<div class="flex items-center gap-2">
+<span class="font-label-caps text-label-caps uppercase tracking-wider text-primary">Workspace RAG &amp; Context</span>
+<span class="w-1 h-1 rounded-full bg-outline-variant"></span>
+<span class="font-label-caps text-label-caps uppercase tracking-wider text-secondary flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>
+        Memory Indexed
+      </span>
+</div>
+<h1 class="font-display-lg text-display-lg text-on-background tracking-tight">Personal Knowledge &amp; Skills</h1>
+<p class="font-body-md text-body-md text-on-surface-variant max-w-2xl">
+      Ground your local rig and frontier agents in private repos, verified quantitative models, and personal workflow guardrails.
+    </p>
+</section>
+<!-- SEARCH & FILTER ROW (Gemini Clean Pill Aesthetic) -->
+<section class="flex flex-col gap-4 mb-10">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline text-[20px] pointer-events-none">search</span>
+<input class="w-full bg-surface-container hover:bg-surface-container-high focus:bg-surface-container-high text-on-surface placeholder:text-outline text-body-md font-body-md pl-12 pr-28 py-3.5 rounded-full shadow-sm outline-none transition-all" id="knowledge-search" placeholder="Search documents, codebases, or memories..." type="text">
+<div class="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+<kbd class="hidden sm:inline-block px-2 py-0.5 rounded-full bg-surface-container-highest text-outline font-code-sm text-code-sm">⌘K</kbd>
+</div>
+</div>
+<!-- Filter Chips -->
+<div class="flex items-center gap-2 overflow-x-auto pb-1" id="filter-container"><button class="filter-pill active px-4 py-1.5 rounded-full bg-surface-bright text-on-surface font-label-md text-label-md shadow-sm transition-all" data-filter="all">All Resources</button><button class="filter-pill px-4 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all" data-filter="vault">Knowledge Bases</button><button class="filter-pill px-4 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all" data-filter="skills">Scoped Skills</button><button class="filter-pill px-4 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all" data-filter="rules">System Guardrails</button><button class="filter-pill px-4 py-1.5 rounded-full bg-surface-container hover:bg-surface-container-high text-on-surface-variant hover:text-on-surface font-label-md text-label-md transition-all flex items-center gap-1.5" data-filter="engine"><span class="material-symbols-outlined text-[15px]">tune</span><span>Engine Config</span></button></div>
+</section>
+<!-- CONNECTED KNOWLEDGE BASES (Spacious 3-Column Bento) -->
+<section class="flex flex-col gap-4 mb-12" data-section="vault"><div class="flex items-center justify-between flex-wrap gap-2"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-primary text-[20px]">database</span><h2 class="font-headline-sm text-headline-sm text-on-background">Connected Knowledge Sources</h2><span class="px-2 py-0.5 rounded-full bg-surface-container-highest text-outline font-code-sm text-code-sm">3 Mounted</span></div><button class="flex items-center gap-1.5 text-primary hover:text-primary-fixed font-label-md text-label-md transition-colors px-3 py-1.5 rounded-full hover:bg-surface-container"><span class="material-symbols-outlined text-[16px]">add</span><span>Connect Source</span></button></div><div class="grid grid-cols-1 md:grid-cols-3 gap-4"><div class="group flex flex-col justify-between p-5 rounded-xl bg-surface-container hover:bg-surface-container-high shadow-sm hover:shadow-md transition-all duration-200 border border-transparent hover:border-outline-variant/30"><div class="flex flex-col gap-3"><div class="flex items-center justify-between"><div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-primary group-hover:scale-105 transition-transform"><span class="material-symbols-outlined text-[20px]">candlestick_chart</span></div><span class="font-code-sm text-code-sm px-2.5 py-1 rounded-full bg-surface-container-lowest text-secondary flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Live Sync</span></div><div class="flex flex-col mt-1"><h3 class="font-headline-sm text-headline-sm text-on-surface group-hover:text-primary transition-colors">Quantitative Trading Vault</h3><div class="flex items-center gap-2 mt-1 text-on-surface-variant font-body-sm text-body-sm"><span class="font-medium text-on-surface">142 docs</span><span>·</span><span>Synced 8m ago</span></div></div><p class="font-body-sm text-body-sm text-outline mt-1 line-clamp-2">Alpha signals, volatility regime research, slippage matrices, and exchange execution post-mortems.</p><div class="flex items-center gap-2 mt-2 pt-2 border-t border-gemini-border/40"><span class="font-code-sm text-code-sm px-2 py-0.5 rounded bg-surface-container-highest text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[12px] text-secondary">lock</span>Read-only</span><span class="font-code-sm text-code-sm text-outline">Cosine · 1536d</span></div></div><div class="flex items-center justify-between pt-4 mt-3"><span class="font-code-sm text-code-sm text-outline">v2.4 Vector Store</span><div class="flex items-center gap-1.5"><button class="px-2.5 py-1.5 rounded-full bg-surface-container-highest hover:bg-surface-bright text-on-surface font-label-md text-label-md transition-colors flex items-center gap-1" title="Trigger sync"><span class="material-symbols-outlined text-[14px]">sync</span><span>Sync</span></button><button class="px-2.5 py-1.5 rounded-full bg-surface-container-highest hover:bg-surface-bright text-on-surface font-label-md text-label-md transition-colors flex items-center gap-1" title="Browse files"><span class="material-symbols-outlined text-[14px]">folder_open</span><span>Browse</span></button></div></div></div><div class="group flex flex-col justify-between p-5 rounded-xl bg-surface-container hover:bg-surface-container-high shadow-sm hover:shadow-md transition-all duration-200 border border-transparent hover:border-outline-variant/30"><div class="flex flex-col gap-3"><div class="flex items-center justify-between"><div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-tertiary group-hover:scale-105 transition-transform"><span class="material-symbols-outlined text-[20px]">code_blocks</span></div><span class="font-code-sm text-code-sm px-2.5 py-1 rounded-full bg-surface-container-lowest text-secondary flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Live Watcher</span></div><div class="flex flex-col mt-1"><h3 class="font-headline-sm text-headline-sm text-on-surface group-hover:text-primary transition-colors">Personal Repositories</h3><div class="flex items-center gap-2 mt-1 text-on-surface-variant font-body-sm text-body-sm"><span class="font-medium text-on-surface">18 active repos</span><span>·</span><span>Local git tree</span></div></div><p class="font-body-sm text-body-sm text-outline mt-1 line-clamp-2">Full AST code embeddings, active worktrees, monorepo configs, and local microservice manifests.</p><div class="flex items-center gap-2 mt-2 pt-2 border-t border-gemini-border/40"><span class="font-code-sm text-code-sm px-2 py-0.5 rounded bg-surface-container-highest text-secondary flex items-center gap-1"><span class="material-symbols-outlined text-[12px]">shield</span>Isolated AST</span><span class="font-code-sm text-code-sm text-outline">Local rig</span></div></div><div class="flex items-center justify-between pt-4 mt-3"><span class="font-code-sm text-code-sm text-outline">Tree-sitter indexed</span><div class="flex items-center gap-1.5"><button class="px-2.5 py-1.5 rounded-full bg-surface-container-highest hover:bg-surface-bright text-on-surface font-label-md text-label-md transition-colors flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">sync</span><span>Sync</span></button><button class="px-2.5 py-1.5 rounded-full bg-surface-container-highest hover:bg-surface-bright text-on-surface font-label-md text-label-md transition-colors flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">folder_open</span><span>Browse</span></button></div></div></div><div class="group flex flex-col justify-between p-5 rounded-xl bg-surface-container hover:bg-surface-container-high shadow-sm hover:shadow-md transition-all duration-200 border border-transparent hover:border-outline-variant/30"><div class="flex flex-col gap-3"><div class="flex items-center justify-between"><div class="w-10 h-10 rounded-full bg-surface-container-highest flex items-center justify-center text-primary-fixed-dim group-hover:scale-105 transition-transform"><span class="material-symbols-outlined text-[20px]">edit_note</span></div><span class="font-code-sm text-code-sm px-2.5 py-1 rounded-full bg-surface-container-lowest text-primary flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-primary"></span>Indexed</span></div><div class="flex flex-col mt-1"><h3 class="font-headline-sm text-headline-sm text-on-surface group-hover:text-primary transition-colors">Architecture &amp; Engineering Notes</h3><div class="flex items-center gap-2 mt-1 text-on-surface-variant font-body-sm text-body-sm"><span class="font-medium text-on-surface">322 notes</span><span>·</span><span>Synced 1h ago</span></div></div><p class="font-body-sm text-body-sm text-outline mt-1 line-clamp-2">Design decision records, distributed consensus patterns, and personal systems architectural memos.</p><div class="flex items-center gap-2 mt-2 pt-2 border-t border-gemini-border/40"><span class="font-code-sm text-code-sm px-2 py-0.5 rounded bg-surface-container-highest text-on-surface-variant flex items-center gap-1"><span class="material-symbols-outlined text-[12px] text-secondary">lock</span>Read-only</span><span class="font-code-sm text-code-sm text-outline">Obsidian Vault</span></div></div><div class="flex items-center justify-between pt-4 mt-3"><span class="font-code-sm text-code-sm text-outline">Markdown &amp; Canvas</span><div class="flex items-center gap-1.5"><button class="px-2.5 py-1.5 rounded-full bg-surface-container-highest hover:bg-surface-bright text-on-surface font-label-md text-label-md transition-colors flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">sync</span><span>Sync</span></button><button class="px-2.5 py-1.5 rounded-full bg-surface-container-highest hover:bg-surface-bright text-on-surface font-label-md text-label-md transition-colors flex items-center gap-1"><span class="material-symbols-outlined text-[14px]">folder_open</span><span>Browse</span></button></div></div></div></div></section>
+<!-- REUSABLE AGENT SKILLS (Clean 4-Card Grid) -->
+<section class="flex flex-col gap-4 mb-12" data-section="skills"><div class="flex items-center justify-between flex-wrap gap-2"><div class="flex items-center gap-2"><span class="material-symbols-outlined text-secondary text-[20px]">bolt</span><h2 class="font-headline-sm text-headline-sm text-on-background">Provenance &amp; Scoped Agent Skills</h2></div><span class="font-label-caps text-label-caps text-outline uppercase tracking-wider">4 Verified Guardrails</span></div><div class="grid grid-cols-1 md:grid-cols-2 gap-4"><div class="p-5 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors shadow-sm flex flex-col justify-between border border-transparent hover:border-outline-variant/30"><div class="flex items-start gap-3.5"><div class="w-9 h-9 rounded-xl bg-surface-container-highest flex items-center justify-center text-primary shrink-0"><span class="material-symbols-outlined text-[18px]">verified</span></div><div class="flex flex-col flex-1"><div class="flex items-center justify-between gap-2"><h3 class="font-headline-sm text-headline-sm text-on-surface">Backtest Verification</h3><span class="font-code-sm text-code-sm px-2 py-0.5 rounded-full bg-surface-container-lowest text-primary font-medium">Python</span></div><p class="font-body-sm text-body-sm text-on-surface-variant mt-1.5">VectorBT &amp; custom metric guardrails. Enforces sanity checks on lookahead bias and turnover limits.</p><div class="mt-3 pt-2 border-t border-gemini-border/40 flex flex-col gap-1.5 text-xs"><div class="flex items-center justify-between text-on-surface-variant"><span class="text-outline">Verification:</span><span class="font-code-sm text-code-sm text-on-surface">Zero lookahead leakage &amp; turnover ≤ 20%</span></div><div class="flex items-center justify-between text-on-surface-variant"><span class="text-outline">Provenance:</span><span class="font-code-sm text-code-sm text-secondary">models/quant_risk_v4.py (Verified)</span></div></div></div></div><div class="flex items-center justify-between pt-3 mt-3 text-outline font-label-md text-label-md"><span class="flex items-center gap-1.5 text-secondary"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Guardrail active</span><button class="text-primary hover:text-primary-fixed transition-colors font-medium">Configure</button></div></div><div class="p-5 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors shadow-sm flex flex-col justify-between border border-transparent hover:border-outline-variant/30"><div class="flex items-start gap-3.5"><div class="w-9 h-9 rounded-xl bg-surface-container-highest flex items-center justify-center text-secondary shrink-0"><span class="material-symbols-outlined text-[18px]">fork_right</span></div><div class="flex flex-col flex-1"><div class="flex items-center justify-between gap-2"><h3 class="font-headline-sm text-headline-sm text-on-surface">Git Worktree Isolator</h3><span class="font-code-sm text-code-sm px-2 py-0.5 rounded-full bg-surface-container-lowest text-secondary font-medium">Git CLI</span></div><p class="font-body-sm text-body-sm text-on-surface-variant mt-1.5">Auto branch sandboxing. Creates pristine temporary worktrees so sub-agents never taint master HEAD.</p><div class="mt-3 pt-2 border-t border-gemini-border/40 flex flex-col gap-1.5 text-xs"><div class="flex items-center justify-between text-on-surface-variant"><span class="text-outline">Verification:</span><span class="font-code-sm text-code-sm text-on-surface">Clean worktree detached HEAD &amp; auto-prune</span></div><div class="flex items-center justify-between text-on-surface-variant"><span class="text-outline">Provenance:</span><span class="font-code-sm text-code-sm text-secondary">scripts/worktree_daemon.sh (Local)</span></div></div></div></div><div class="flex items-center justify-between pt-3 mt-3 text-outline font-label-md text-label-md"><span class="flex items-center gap-1.5 text-secondary"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Isolated sandbox</span><button class="text-primary hover:text-primary-fixed transition-colors font-medium">Configure</button></div></div><div class="p-5 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors shadow-sm flex flex-col justify-between border border-transparent hover:border-outline-variant/30"><div class="flex items-start gap-3.5"><div class="w-9 h-9 rounded-xl bg-surface-container-highest flex items-center justify-center text-tertiary shrink-0"><span class="material-symbols-outlined text-[18px]">schedule</span></div><div class="flex flex-col flex-1"><div class="flex items-center justify-between gap-2"><h3 class="font-headline-sm text-headline-sm text-on-surface">Webull &amp; Market Data Parser</h3><span class="font-code-sm text-code-sm px-2 py-0.5 rounded-full bg-surface-container-lowest text-tertiary font-medium">Polars</span></div><p class="font-body-sm text-body-sm text-on-surface-variant mt-1.5">Nanosecond timestamp alignment and forward-fill normalization across disparate broker order books.</p><div class="mt-3 pt-2 border-t border-gemini-border/40 flex flex-col gap-1.5 text-xs"><div class="flex items-center justify-between text-on-surface-variant"><span class="text-outline">Verification:</span><span class="font-code-sm text-code-sm text-on-surface">UTC monotonicity &amp; zero missing quote ticks</span></div><div class="flex items-center justify-between text-on-surface-variant"><span class="text-outline">Provenance:</span><span class="font-code-sm text-code-sm text-secondary">ingest/webull_l2_stream.rs (Native)</span></div></div></div></div><div class="flex items-center justify-between pt-3 mt-3 text-outline font-label-md text-label-md"><span class="flex items-center gap-1.5 text-secondary"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>UTC nanosecond standard</span><button class="text-primary hover:text-primary-fixed transition-colors font-medium">Configure</button></div></div><div class="p-5 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors shadow-sm flex flex-col justify-between border border-transparent hover:border-outline-variant/30"><div class="flex items-start gap-3.5"><div class="w-9 h-9 rounded-xl bg-surface-container-highest flex items-center justify-center text-primary-fixed-dim shrink-0"><span class="material-symbols-outlined text-[18px]">view_quilt</span></div><div class="flex flex-col flex-1"><div class="flex items-center justify-between gap-2"><h3 class="font-headline-sm text-headline-sm text-on-surface">Component Generator</h3><span class="font-code-sm text-code-sm px-2 py-0.5 rounded-full bg-surface-container-lowest text-primary-fixed-dim font-medium">Tailwind</span></div><p class="font-body-sm text-body-sm text-on-surface-variant mt-1.5">Clean React &amp; Tailwind tokens standard. Restricts generated code to designated system typography and tokens.</p><div class="mt-3 pt-2 border-t border-gemini-border/40 flex flex-col gap-1.5 text-xs"><div class="flex items-center justify-between text-on-surface-variant"><span class="text-outline">Verification:</span><span class="font-code-sm text-code-sm text-on-surface">Zero arbitrary CSS &amp; 100% theme token mapping</span></div><div class="flex items-center justify-between text-on-surface-variant"><span class="text-outline">Provenance:</span><span class="font-code-sm text-code-sm text-secondary">design/token_guardrail.json (Verified)</span></div></div></div></div><div class="flex items-center justify-between pt-3 mt-3 text-outline font-label-md text-label-md"><span class="flex items-center gap-1.5 text-secondary"><span class="w-1.5 h-1.5 rounded-full bg-secondary"></span>Strict token enforcement</span><button class="text-primary hover:text-primary-fixed transition-colors font-medium">Configure</button></div></div></div></section>
+<!-- CORE PREFERENCES & RULES (Clean Plain English Cards) -->
+<section class="flex flex-col gap-4" data-section="rules">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-outline text-[20px]">rule</span>
+<h2 class="font-headline-sm text-headline-sm text-on-background">Core Preferences &amp; Rules</h2>
+</div>
+<button class="text-primary hover:text-primary-fixed font-label-md text-label-md transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[16px]">edit</span>
+<span>Edit System Prompt</span>
+</button>
+</div>
+<div class="flex flex-col gap-3">
+<!-- Rule 1 -->
+<div class="flex items-start gap-4 p-4 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest flex items-center justify-center text-secondary shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+<div class="flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+<div class="flex flex-col">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Strict test verification before finishing tasks</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+              Agents cannot mark a ticket or code generation task as complete without writing and passing automated unit tests.
+            </p>
+</div>
+<span class="font-label-caps text-label-caps text-secondary px-2.5 py-1 rounded-full bg-surface-container-lowest shrink-0 self-start sm:self-center">
+            ACTIVE ENFORCED
+          </span>
+</div>
+</div>
+<!-- Rule 2 -->
+<div class="flex items-start gap-4 p-4 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest flex items-center justify-center text-secondary shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+<div class="flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+<div class="flex flex-col">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Prefer quantitative data over subjective indicators</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+              Discard arbitrary chart patterns and RSI/MACD heuristics. Require statistically valid Sharpe ratios and t-distribution stats.
+            </p>
+</div>
+<span class="font-label-caps text-label-caps text-secondary px-2.5 py-1 rounded-full bg-surface-container-lowest shrink-0 self-start sm:self-center">
+            ACTIVE ENFORCED
+          </span>
+</div>
+</div>
+<!-- Rule 3 -->
+<div class="flex items-start gap-4 p-4 rounded-xl bg-surface-container hover:bg-surface-container-high transition-colors">
+<div class="w-6 h-6 rounded-full bg-surface-container-highest flex items-center justify-center text-secondary shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-[14px]">check</span>
+</div>
+<div class="flex-1 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+<div class="flex flex-col">
+<h3 class="font-headline-sm text-headline-sm text-on-surface">Local-first execution and triage</h3>
+<p class="font-body-sm text-body-sm text-on-surface-variant mt-0.5">
+              All embedding lookups, linting passes, and local unit tests must run directly on the Home Rig prior to external frontier LLM calls.
+            </p>
+</div>
+<span class="font-label-caps text-label-caps text-secondary px-2.5 py-1 rounded-full bg-surface-container-lowest shrink-0 self-start sm:self-center">
+            ACTIVE ENFORCED
+          </span>
+</div>
+</div>
+</div>
+</section><section class="flex flex-col gap-3 mt-8" data-section="engine"><details class="group bg-surface-container rounded-xl overflow-hidden border border-gemini-border/50"><summary class="flex items-center justify-between p-4 cursor-pointer hover:bg-surface-container-high transition-colors list-none"><div class="flex items-center gap-3"><div class="w-8 h-8 rounded-lg bg-surface-container-highest flex items-center justify-center text-primary"><span class="material-symbols-outlined text-[18px]">tune</span></div><div><h3 class="font-headline-sm text-headline-sm text-on-surface">Vector Engine &amp; Embedding Configuration</h3><p class="font-body-sm text-body-sm text-outline">Fine-tune embedding model, distance metric, HNSW parameters, and rig memory limits.</p></div></div><div class="flex items-center gap-2"><span class="font-code-sm text-code-sm text-outline hidden sm:inline-block">Qdrant Local · Cosine</span><span class="material-symbols-outlined text-outline group-open:rotate-180 transition-transform">expand_more</span></div></summary><div class="p-5 pt-2 border-t border-gemini-border/40 grid grid-cols-1 md:grid-cols-3 gap-4 text-xs"><div class="flex flex-col gap-1.5"><label class="font-medium text-on-surface">Active Embedding Model</label><div class="flex items-center justify-between px-3 py-2 rounded-lg bg-surface-container-highest text-on-surface"><span class="font-code-sm text-code-sm">text-embedding-3-small</span><span class="font-code-sm text-code-sm text-secondary">1536d</span></div><p class="text-[11px] text-outline">Optimal for latency and quant notation similarity.</p></div><div class="flex flex-col gap-1.5"><label class="font-medium text-on-surface">Vector Distance Metric</label><div class="flex items-center justify-between px-3 py-2 rounded-lg bg-surface-container-highest text-on-surface"><span class="font-code-sm text-code-sm">Cosine Similarity</span><span class="font-code-sm text-code-sm text-outline">Normalized</span></div><p class="text-[11px] text-outline">Dot product fallback enabled for fast batch rerank.</p></div><div class="flex flex-col gap-1.5"><label class="font-medium text-on-surface">HNSW Graph Knobs</label><div class="flex items-center justify-between px-3 py-2 rounded-lg bg-surface-container-highest text-on-surface"><span class="font-code-sm text-code-sm">M: 16 · efSearch: 100</span><span class="font-code-sm text-code-sm text-secondary">Balanced</span></div><p class="text-[11px] text-outline">Tuned for single-node Home Rig NVMe performance.</p></div></div></details></section>
+</div>
+<script>
+  // Clean client-side search & filter interaction
+  (function() {
+    const searchInput = document.getElementById('knowledge-search');
+    const filterButtons = document.querySelectorAll('.filter-pill');
+    const sections = document.querySelectorAll('[data-section]');
+
+    // Filter pill toggles
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => {
+          b.classList.remove('bg-surface-bright', 'text-on-surface');
+          b.classList.add('bg-surface-container', 'text-on-surface-variant');
+        });
+        btn.classList.add('bg-surface-bright', 'text-on-surface');
+        btn.classList.remove('bg-surface-container', 'text-on-surface-variant');
+
+        const filter = btn.getAttribute('data-filter');
+        sections.forEach(sec => {
+          if (filter === 'all' || sec.getAttribute('data-section') === filter) {
+            sec.style.display = 'flex';
+          } else {
+            sec.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    // Simple search filtering
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        const cards = document.querySelectorAll('[data-section] .p-5, [data-section] .p-4');
+        
+        cards.forEach(card => {
+          const text = card.textContent.toLowerCase();
+          if (query === '' || text.includes(query)) {
+            card.style.display = 'flex';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    }
+  })();
+</script></main>
+<!-- FLOATING GEMINI-STYLE PROMPT COMPOSER -->
+<div class="absolute bottom-0 left-0 right-0 z-30 pointer-events-none pb-5 pt-10 bg-gradient-to-t from-gemini-bg via-gemini-bg/95 to-transparent px-4 md:px-6">
+<div class="w-full max-w-3xl mx-auto flex flex-col gap-2.5 pointer-events-auto">
+<!-- Suggestion Chips (Clean pills) -->
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+<button class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gemini-surface/80 hover:bg-gemini-surface border border-gemini-border text-xs text-gemini-text-main hover:text-white transition-all">
+<span class="material-symbols-outlined text-[15px] text-gemini-blue">show_chart</span>
+<span>Backtest strategy</span>
+</button>
+<button class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gemini-surface/80 hover:bg-gemini-surface border border-gemini-border text-xs text-gemini-text-main hover:text-white transition-all">
+<span class="material-symbols-outlined text-[15px] text-gemini-emerald">folder_open</span>
+<span>Audit git worktree</span>
+</button>
+<button class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gemini-surface/80 hover:bg-gemini-surface border border-gemini-border text-xs text-gemini-text-main hover:text-white transition-all">
+<span class="material-symbols-outlined text-[15px] text-gemini-blue">sync_alt</span>
+<span>Sync market data</span>
+</button>
+</div>
+<!-- Floating Pill Input Box -->
+<div class="bg-gemini-surface/90 hover:bg-gemini-surface focus-within:bg-gemini-surface border border-gemini-border focus-within:border-gemini-text-sub/50 rounded-3xl p-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all">
+<div class="px-3 pt-1">
+<textarea class="w-full bg-transparent border-0 text-[15px] text-gemini-text-main placeholder:text-gemini-text-sub focus:ring-0 focus:outline-none resize-none p-0 leading-relaxed" id="prompt-input" placeholder="Ask anything or run an autonomous task..." rows="1"></textarea>
+</div>
+<div class="flex items-center justify-between pt-2 px-1">
+<!-- Left Controls inside Input -->
+<div class="flex items-center gap-1">
+<button class="p-2 text-gemini-text-sub hover:text-white rounded-full hover:bg-gemini-surface-hover transition-colors" title="Attach file or code">
+<span class="material-symbols-outlined text-xl">add</span>
+</button>
+<button class="flex items-center gap-1.5 py-1 px-2.5 text-xs text-gemini-text-sub hover:text-white rounded-full hover:bg-gemini-surface-hover transition-colors">
+<span class="material-symbols-outlined text-sm text-gemini-blue">tune</span>
+<span>Auto</span>
+</button>
+</div>
+<!-- Right Controls (Mic & Send Pill) -->
+<div class="flex items-center gap-1">
+<button class="p-2 text-gemini-text-sub hover:text-white rounded-full hover:bg-gemini-surface-hover transition-colors" title="Voice mode">
+<span class="material-symbols-outlined text-xl">mic</span>
+</button>
+<button class="w-9 h-9 rounded-full bg-gemini-text-main text-gemini-bg hover:bg-white flex items-center justify-center transition-all disabled:opacity-30 disabled:pointer-events-none active:scale-95" title="Send message">
+<span class="material-symbols-outlined text-lg font-bold">arrow_upward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Micro Privacy Guarantee -->
+<div class="text-center text-[11px] text-gemini-text-sub">
+          Syntropic runs tasks locally on your home rig. Zero cloud egress unless frontier models are invoked.
+        </div>
+</div>
+</div>
+</div>
+<script>
+    const textarea = document.getElementById('prompt-input');
+    if (textarea) {
+      textarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 160) + 'px';
+      });
+      textarea.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          if (this.value.trim().length > 0) {
+            this.value = '';
+            this.style.height = 'auto';
+          }
+        }
+      });
+    }
+  </script>
+
+
+</body></html>

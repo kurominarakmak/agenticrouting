@@ -1,0 +1,285 @@
+<!DOCTYPE html><html class="dark" lang="en"><head>
+<meta charset="utf-8">
+<meta content="width=device-width, initial-scale=1.0" name="viewport">
+<title>Syntropic Chat</title>
+<link href="https://fonts.googleapis.com" rel="preconnect">
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "gemini-bg": "#131314",
+            "gemini-surface": "#1e1f20",
+            "gemini-surface-hover": "#282a2c",
+            "gemini-card": "#18191b",
+            "gemini-border": "#2d2f31",
+            "gemini-text-main": "#e3e3e3",
+            "gemini-text-sub": "#8e918f",
+            "gemini-blue": "#a8c7fa",
+            "gemini-accent": "#c2e7ff",
+            "gemini-glow": "#7cacf8",
+            "gemini-emerald": "#6dd58c"
+          },
+          fontFamily: {
+            sans: ["Inter", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #131314;
+        color: #e3e3e3;
+        font-family: 'Inter', sans-serif;
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #282a2c;
+        border-radius: 9999px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #3b3d40;
+      }
+    }
+  </style>
+</head>
+<body class="bg-gemini-bg min-h-screen flex overflow-hidden antialiased selection:bg-gemini-blue/20 selection:text-gemini-blue">
+<!-- COLLAPSIBLE MINIMAL LEFT SIDEBAR (Gemini-style) -->
+<aside class="hidden md:flex w-64 shrink-0 bg-gemini-surface border-r border-gemini-border/60 flex-col justify-between p-3.5 z-40 transition-all duration-300" id="sidebar">
+<div class="flex flex-col gap-3">
+<!-- Top Logo / Collapse Trigger -->
+<div class="flex items-center justify-between px-2 pt-1 pb-1">
+
+<button class="p-1.5 text-gemini-text-sub hover:text-white rounded-lg hover:bg-gemini-surface-hover transition-colors" title="Collapse sidebar">
+<span class="material-symbols-outlined text-[18px]">left_panel_close</span>
+</button>
+</div>
+<!-- New Chat / Action Pill -->
+<button class="flex items-center gap-2.5 w-full py-2.5 px-3.5 mt-1 rounded-full bg-gemini-card hover:bg-gemini-surface-hover border border-gemini-border text-sm font-medium text-gemini-text-main transition-colors shadow-sm group">
+<span class="material-symbols-outlined text-lg text-gemini-blue group-hover:rotate-90 transition-transform">add</span>
+<span>New chat</span>
+</button>
+<!-- Navigation Links -->
+<nav class="flex flex-col gap-0.5 mt-2 text-xs"><div class="px-3 pt-2 pb-1 text-[11px] font-medium tracking-wider uppercase text-gemini-text-sub">Recent Conversations</div><a class="flex items-center justify-between px-3 py-2 rounded-xl bg-gemini-surface-hover text-white text-[13px] font-medium group transition-colors" href="#"><div class="flex items-center gap-2.5 truncate"><span class="material-symbols-outlined text-base text-gemini-blue">chat_bubble</span><span class="truncate">Frontend Telemetry &amp; MCP</span></div></a><a class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gemini-surface-hover/70 text-gemini-text-sub hover:text-gemini-text-main text-[13px] transition-colors" href="#"><div class="flex items-center gap-2.5 truncate"><span class="material-symbols-outlined text-base">chat_bubble_outline</span><span class="truncate">Mean Reversion Strategy</span></div></a><a class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gemini-surface-hover/70 text-gemini-text-sub hover:text-gemini-text-main text-[13px] transition-colors" href="#"><div class="flex items-center gap-2.5 truncate"><span class="material-symbols-outlined text-base">chat_bubble_outline</span><span class="truncate">Qwen 2.5 Coder Worktree</span></div></a><div class="px-3 pt-3.5 pb-1 text-[11px] font-medium tracking-wider uppercase text-gemini-text-sub">Workspace</div><a class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gemini-surface-hover/70 text-gemini-text-sub hover:text-gemini-text-main text-[13px] transition-colors" href="#"><div class="flex items-center gap-2.5"><span class="material-symbols-outlined text-base">task_alt</span><span>Tasks</span></div><span class="text-[11px] px-1.5 py-0.5 rounded-full bg-gemini-emerald/15 text-gemini-emerald font-medium">3 active</span></a><a class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gemini-surface-hover/70 text-gemini-text-sub hover:text-gemini-text-main text-[13px] transition-colors" href="#"><div class="flex items-center gap-2.5"><span class="material-symbols-outlined text-base">auto_stories</span><span>Knowledge</span></div><span class="text-[11px] text-gemini-text-sub font-mono">14 repos</span></a></nav>
+</div>
+<!-- Sidebar Bottom Profile & Settings -->
+<div class="pt-2 border-t border-gemini-border/60 flex flex-col gap-1">
+<a class="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-gemini-surface-hover text-gemini-text-sub hover:text-white text-[13px] transition-colors" href="#">
+<span class="material-symbols-outlined text-base">settings</span>
+<span>Settings</span>
+</a>
+<div class="flex items-center justify-between px-2.5 py-2 mt-1 rounded-xl bg-gemini-card/60">
+<div class="flex items-center gap-2">
+<img alt="Architect Admin" class="w-7 h-7 rounded-full object-cover ring-1 ring-gemini-border" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_gHw5HQpDKOUkMAgGb25fwT0Y0u2tDSeSJNbXlJTlKwgM15BgEXaI_OIErEv6AouqtItZzcHDRv-ArCrHO9_mrLI-xPyII90d23Ea9CSXbG588UqSiFjSUE-D73BojMqPOxIi_LODQvsyyoJ2UlV86p8P2AEyBpc6cojUffQcRhYl3IcLrsudQqobL1l95ZElQhlWwm3GSORxKo77NBQZIY-jdOvhy8pbI2JUFGbQ">
+<div class="flex flex-col">
+<span class="text-xs font-medium text-gemini-text-main">Architect</span>
+<span class="text-[11px] text-gemini-text-sub">Pro workspace</span>
+</div>
+</div>
+<span class="w-2 h-2 rounded-full bg-gemini-emerald"></span>
+</div>
+</div>
+</aside>
+<!-- MAIN CHAT CONTAINER -->
+<div class="flex-1 flex flex-col h-screen relative bg-gemini-bg overflow-hidden">
+<!-- CLEAN MINIMAL TOP BAR (Gemini-style) -->
+<header class="h-14 w-full shrink-0 flex items-center justify-between px-5 md:px-8 border-b border-transparent z-20">
+<!-- Left: Model Dropdown Selector -->
+<div class="flex items-center gap-2"><button class="md:hidden p-1.5 text-gemini-text-sub hover:text-white rounded-lg hover:bg-gemini-surface mr-1 transition-colors" title="Open menu"><span class="material-symbols-outlined text-[20px]">menu</span></button>
+
+</div>
+<!-- Right: Subdued Connection status & Profile -->
+<div class="flex items-center gap-3">
+
+<button class="w-8 h-8 rounded-full hover:bg-gemini-surface text-gemini-text-sub hover:text-white flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-lg">tune</span>
+</button>
+
+</div>
+</header>
+<!-- CONVERSATION STREAM (Spacious & Airy) -->
+<main class="flex-1 overflow-y-auto px-4 md:px-6 pt-2 pb-56">
+<div class="w-full max-w-3xl mx-auto flex flex-col gap-10">
+<!-- MESSAGE 1: USER -->
+<div class="flex justify-end">
+<div class="bg-gemini-surface text-gemini-text-main px-4 py-3 rounded-2xl max-w-[85%] md:max-w-[70%] text-[15px] leading-relaxed shadow-sm">
+            How many legs does a dog have?
+          </div>
+</div>
+<!-- RESPONSE 1: ASSISTANT -->
+<div class="flex items-start gap-3.5 group">
+<div class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500/20 to-purple-500/20 border border-blue-400/30 flex items-center justify-center text-gemini-blue shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-base">spark</span>
+</div>
+<div class="flex-1 flex flex-col gap-2">
+<!-- Sleek Minimal Run Pill -->
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-gemini-surface text-[11px] text-gemini-emerald font-medium border border-gemini-border/50">
+<span class="material-symbols-outlined text-xs">bolt</span>
+                Local · 0.12s
+              </span>
+</div>
+<p class="text-[15px] leading-relaxed text-gemini-text-main">
+              A dog typically has <span class="font-medium text-white">four legs</span> (quadrupedal anatomy), consisting of two front forelegs and two rear hind legs.
+            </p>
+<div class="flex items-center gap-2 pt-1 text-gemini-text-sub opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 rounded-lg hover:bg-gemini-surface hover:text-white" title="Copy response">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+</button>
+<button class="p-1 rounded-lg hover:bg-gemini-surface hover:text-white" title="Good response">
+<span class="material-symbols-outlined text-sm">thumb_up</span>
+</button>
+</div>
+</div>
+</div>
+<!-- MESSAGE 2: USER -->
+<div class="flex justify-end">
+<div class="bg-gemini-surface text-gemini-text-main px-4 py-3 rounded-2xl max-w-[85%] md:max-w-[70%] text-[15px] leading-relaxed shadow-sm">
+            Check NVDA's latest price and news using Webull MCP.
+          </div>
+</div>
+<!-- RESPONSE 2: ASSISTANT (Gemini style card disclosure) -->
+<div class="flex items-start gap-3.5 group">
+<div class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500/20 to-purple-500/20 border border-blue-400/30 flex items-center justify-center text-gemini-blue shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-base">spark</span>
+</div>
+<div class="flex-1 flex flex-col gap-3">
+<div class="flex items-center gap-2">
+<span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-blue-500/10 text-gemini-blue text-[11px] font-medium border border-blue-500/20">
+<span class="material-symbols-outlined text-xs">monitoring</span>
+                Fetched via Webull MCP
+              </span>
+</div>
+<!-- Clean Minimal Financial Card -->
+<div class="bg-gemini-surface/90 border border-gemini-border rounded-2xl p-4 flex flex-col gap-3.5 shadow-sm"><div class="flex items-center justify-between flex-wrap gap-2"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-gemini-blue animate-pulse"></span><span class="text-xs font-semibold text-gemini-blue bg-gemini-blue/10 px-2.5 py-0.5 rounded-full border border-blue-500/20">● Running · Step 2 of 4</span><span class="text-xs text-gemini-text-sub font-mono">#1082</span></div><div class="flex items-center gap-2"><span class="text-[11px] px-2 py-0.5 rounded bg-gemini-card text-gemini-text-sub font-mono border border-gemini-border/50">Harness: <strong class="text-gemini-text-main">Claude Code</strong></span><span class="text-[11px] text-gemini-text-sub font-mono hidden md:inline">syntropic-core / frontend</span></div></div><div class="flex flex-col gap-1"><div class="text-xs font-medium text-white flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-gemini-blue">code_blocks</span><span>Scaffolding telemetry component &amp; wiring Vitest assertions</span></div><div class="text-[11px] text-gemini-text-sub">Target directive: Wire button telemetry callback to <code>/api/telemetry</code> with retry buffer</div></div><div class="flex items-center gap-3"><div class="flex-1 bg-gemini-card h-1.5 rounded-full overflow-hidden"><div class="bg-gradient-to-r from-blue-500 to-gemini-blue h-full rounded-full transition-all duration-500" style="width: 50%"></div></div><span class="text-[11px] font-mono text-gemini-emerald bg-gemini-emerald/10 px-2 py-0.5 rounded-md font-medium shrink-0">Vitest: 18/22 passing</span></div><div class="pt-1 border-t border-gemini-border/50 flex flex-col gap-2"><details class="group/details text-xs"><summary class="cursor-pointer text-gemini-text-sub hover:text-gemini-blue flex items-center gap-1 select-none transition-colors"><span class="material-symbols-outlined text-sm group-open/details:rotate-90 transition-transform">chevron_right</span><span class="font-mono text-[11px]">Show execution logs &amp; AST diff [▾]</span></summary><div class="mt-2 p-3 rounded-xl bg-gemini-card font-mono text-[11px] text-gemini-text-sub flex flex-col gap-1.5 leading-relaxed border border-gemini-border/40"><div class="flex items-center gap-1.5 text-gemini-emerald"><span>✓</span><span>Isolated worktree created: /tmp/syntropic-worktree-tk-1082</span></div><div class="flex items-center gap-1.5 text-gemini-text-main"><span>+</span><span>Added src/components/AnalyticsButton.tsx (+64 lines)</span></div><div class="flex items-center gap-1.5 text-gemini-text-main"><span>+</span><span>Added tests/AnalyticsButton.test.tsx (+48 lines)</span></div><div class="flex items-center gap-1.5 text-gemini-blue animate-pulse"><span>❯</span><span>Running suite: vitest run tests/AnalyticsButton.test.tsx</span></div></div></details><div class="flex items-center justify-between text-xs pt-1"><a class="inline-flex items-center gap-1 text-gemini-blue hover:text-white transition-colors font-medium" href="#"><span>View in Tasks</span><span class="material-symbols-outlined text-sm">arrow_forward</span></a><span class="text-[11px] text-gemini-text-sub font-mono">Originating directive: Chat #839</span></div></div></div>
+<div class="flex items-center gap-2 pt-0.5 text-gemini-text-sub opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 rounded-lg hover:bg-gemini-surface hover:text-white" title="Copy response">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<!-- MESSAGE 3: USER -->
+<div class="flex justify-end">
+<div class="bg-gemini-surface text-gemini-text-main px-4 py-3 rounded-2xl max-w-[85%] md:max-w-[70%] text-[15px] leading-relaxed shadow-sm">
+            Implement the new analytics telemetry button in the frontend repo and connect it to the existing <code class="font-mono text-[13px] px-1.5 py-0.5 rounded bg-gemini-card text-gemini-blue">/api/telemetry</code> endpoint with unit tests.
+          </div>
+</div>
+<!-- RESPONSE 3: ASSISTANT (Minimal Gemini task progress instead of heavy terminal) -->
+<div class="flex items-start gap-3.5 group">
+<div class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500/20 to-purple-500/20 border border-blue-400/30 flex items-center justify-center text-gemini-blue shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-base">spark</span>
+</div>
+<div class="flex-1 flex flex-col gap-3">
+<p class="text-[15px] leading-relaxed text-gemini-text-main">
+              Started task in an isolated worktree. The agent is scaffolding the telemetry component and verifying with Vitest.
+            </p>
+<!-- Clean Gemini-style Task Disclosure Card -->
+<div class="bg-gemini-surface/90 border border-gemini-border rounded-2xl p-4 flex flex-col gap-3.5 shadow-sm"><div class="flex items-center justify-between flex-wrap gap-2"><div class="flex items-center gap-2"><span class="w-2 h-2 rounded-full bg-gemini-blue animate-pulse"></span><span class="text-xs font-semibold text-gemini-blue bg-gemini-blue/10 px-2.5 py-0.5 rounded-full border border-blue-500/20">● Running · Step 2 of 4</span><span class="text-xs text-gemini-text-sub font-mono">#1082</span></div><div class="flex items-center gap-2"><span class="text-[11px] px-2 py-0.5 rounded bg-gemini-card text-gemini-text-sub font-mono border border-gemini-border/50">Harness: <strong class="text-gemini-text-main">Claude Code</strong></span><span class="text-[11px] text-gemini-text-sub font-mono hidden md:inline">syntropic-core / frontend</span></div></div><div class="flex flex-col gap-1"><div class="text-xs font-medium text-white flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-gemini-blue">code_blocks</span><span>Scaffolding telemetry component &amp; wiring Vitest assertions</span></div><div class="text-[11px] text-gemini-text-sub">Target directive: Wire button telemetry callback to <code>/api/telemetry</code> with retry buffer</div></div><div class="flex items-center gap-3"><div class="flex-1 bg-gemini-card h-1.5 rounded-full overflow-hidden"><div class="bg-gradient-to-r from-blue-500 to-gemini-blue h-full rounded-full transition-all duration-500" style="width: 50%"></div></div><span class="text-[11px] font-mono text-gemini-emerald bg-gemini-emerald/10 px-2 py-0.5 rounded-md font-medium shrink-0">Vitest: 18/22 passing</span></div><div class="pt-1 border-t border-gemini-border/50 flex flex-col gap-2"><details class="group/details text-xs"><summary class="cursor-pointer text-gemini-text-sub hover:text-gemini-blue flex items-center gap-1 select-none transition-colors"><span class="material-symbols-outlined text-sm group-open/details:rotate-90 transition-transform">chevron_right</span><span class="font-mono text-[11px]">Show execution logs &amp; AST diff [▾]</span></summary><div class="mt-2 p-3 rounded-xl bg-gemini-card font-mono text-[11px] text-gemini-text-sub flex flex-col gap-1.5 leading-relaxed border border-gemini-border/40"><div class="flex items-center gap-1.5 text-gemini-emerald"><span>✓</span><span>Isolated worktree created: /tmp/syntropic-worktree-tk-1082</span></div><div class="flex items-center gap-1.5 text-gemini-text-main"><span>+</span><span>Added src/components/AnalyticsButton.tsx (+64 lines)</span></div><div class="flex items-center gap-1.5 text-gemini-text-main"><span>+</span><span>Added tests/AnalyticsButton.test.tsx (+48 lines)</span></div><div class="flex items-center gap-1.5 text-gemini-blue animate-pulse"><span>❯</span><span>Running suite: vitest run tests/AnalyticsButton.test.tsx</span></div></div></details><div class="flex items-center justify-between text-xs pt-1"><a class="inline-flex items-center gap-1 text-gemini-blue hover:text-white transition-colors font-medium" href="#"><span>View in Tasks</span><span class="material-symbols-outlined text-sm">arrow_forward</span></a><span class="text-[11px] text-gemini-text-sub font-mono">Originating directive: Chat #839</span></div></div></div>
+<div class="flex items-center gap-2 pt-0.5 text-gemini-text-sub opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 rounded-lg hover:bg-gemini-surface hover:text-white" title="Copy response">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<!-- MESSAGE 4: USER -->
+<div class="flex justify-end">
+<div class="bg-gemini-surface text-gemini-text-main px-4 py-3 rounded-2xl max-w-[85%] md:max-w-[70%] text-[15px] leading-relaxed shadow-sm">
+            Also add error boundary telemetry if the endpoint returns 500.
+          </div>
+</div>
+<!-- RESPONSE 4: ASSISTANT -->
+<div class="flex items-start gap-3.5 group">
+<div class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500/20 to-purple-500/20 border border-blue-400/30 flex items-center justify-center text-gemini-blue shrink-0 mt-0.5">
+<span class="material-symbols-outlined text-base">spark</span>
+</div>
+<div class="flex-1 flex flex-col gap-2">
+<p class="text-[15px] leading-relaxed text-gemini-text-main">
+              Added fallback criterion to active task <strong class="text-white font-medium">#1082</strong>. If <code class="font-mono text-xs px-1.5 py-0.5 rounded bg-gemini-surface text-gemini-blue">/api/telemetry</code> responds with 500, metrics will buffer locally in session storage until connectivity is restored.
+            </p>
+<div class="flex items-center gap-2 pt-1 text-gemini-text-sub opacity-0 group-hover:opacity-100 transition-opacity">
+<button class="p-1 rounded-lg hover:bg-gemini-surface hover:text-white" title="Copy response">
+<span class="material-symbols-outlined text-sm">content_copy</span>
+</button>
+</div>
+</div>
+</div>
+<div class="flex justify-end"><div class="bg-gemini-surface text-gemini-text-main px-4 py-3 rounded-2xl max-w-[85%] md:max-w-[70%] text-[15px] leading-relaxed shadow-sm">Compare local vs frontier routing latency and cost for this workload.</div></div><div class="flex items-start gap-3.5 group"><div class="w-7 h-7 rounded-full bg-gradient-to-tr from-blue-500/20 to-purple-500/20 border border-blue-400/30 flex items-center justify-center text-gemini-blue shrink-0 mt-0.5"><span class="material-symbols-outlined text-base">spark</span></div><div class="flex-1 flex flex-col gap-3"><p class="text-[15px] leading-relaxed text-gemini-text-main">Syntropic Auto evaluated execution paths against your current home rig telemetry:</p><div class="bg-gemini-surface/90 border border-gemini-border rounded-2xl p-4 flex flex-col gap-3 shadow-sm"><div class="flex items-center justify-between text-xs"><span class="text-white font-medium flex items-center gap-1.5"><span class="material-symbols-outlined text-sm text-gemini-blue">swap_horiz</span>Execution Path Optimization</span><span class="font-mono text-[11px] text-gemini-emerald bg-gemini-emerald/10 px-2 py-0.5 rounded-full">Saved ~$0.04/turn</span></div><div class="overflow-x-auto"><table class="w-full text-left text-xs"><thead class="text-[11px] text-gemini-text-sub border-b border-gemini-border/60"><tr><th class="py-1.5 pr-2 font-medium">Routing</th><th class="py-1.5 px-2 font-medium">Latency</th><th class="py-1.5 px-2 font-medium">Cost / MTok</th><th class="py-1.5 pl-2 font-medium">Egress</th></tr></thead><tbody class="divide-y divide-gemini-border/30 text-gemini-text-main font-mono text-[11px]"><tr class="bg-gemini-emerald/5"><td class="py-2 pr-2 font-sans font-medium text-white flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-gemini-emerald"></span>Local (Qwen 2.5 32B)</td><td class="py-2 px-2 text-gemini-emerald">120ms</td><td class="py-2 px-2">$0.00</td><td class="py-2 pl-2 text-gemini-emerald">0 KB</td></tr><tr><td class="py-2 pr-2 font-sans text-gemini-text-sub flex items-center gap-1.5"><span class="w-1.5 h-1.5 rounded-full bg-gemini-text-sub"></span>Frontier (Claude 3.5 Sonnet)</td><td class="py-2 px-2 text-gemini-text-sub">1,240ms</td><td class="py-2 px-2 text-gemini-text-sub">$3.00 / $15.00</td><td class="py-2 pl-2 text-gemini-text-sub">42.8 KB</td></tr></tbody></table></div></div><div class="flex items-center gap-2 pt-0.5 text-gemini-text-sub opacity-0 group-hover:opacity-100 transition-opacity"><button class="p-1 rounded-lg hover:bg-gemini-surface hover:text-white" title="Copy response"><span class="material-symbols-outlined text-sm">content_copy</span></button></div></div></div></div>
+</main>
+<!-- FLOATING GEMINI-STYLE PROMPT COMPOSER -->
+<div class="absolute bottom-0 left-0 right-0 z-30 pointer-events-none pb-5 pt-10 bg-gradient-to-t from-gemini-bg via-gemini-bg/95 to-transparent px-4 md:px-6">
+<div class="w-full max-w-3xl mx-auto flex flex-col gap-2.5 pointer-events-auto">
+<!-- Suggestion Chips (Clean pills) -->
+
+<!-- Floating Pill Input Box -->
+<div class="bg-gemini-surface/90 hover:bg-gemini-surface focus-within:bg-gemini-surface border border-gemini-border focus-within:border-gemini-text-sub/50 rounded-3xl p-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.4)] backdrop-blur-xl transition-all">
+<div class="px-3 pt-1">
+<textarea class="w-full bg-transparent border-0 text-[15px] text-gemini-text-main placeholder:text-gemini-text-sub focus:ring-0 focus:outline-none resize-none p-0 leading-relaxed" id="prompt-input" placeholder="Ask anything or run an autonomous task..." rows="1"></textarea>
+</div>
+<div class="flex items-center justify-between pt-2 px-1">
+<!-- Left Controls inside Input -->
+<div class="flex items-center gap-1">
+<button class="p-2 text-gemini-text-sub hover:text-white rounded-full hover:bg-gemini-surface-hover transition-colors" title="Attach file or code">
+<span class="material-symbols-outlined text-xl">add</span>
+</button>
+<button class="flex items-center gap-1.5 py-1 px-2.5 text-xs text-gemini-text-sub hover:text-white rounded-full hover:bg-gemini-surface-hover transition-colors">
+<span class="material-symbols-outlined text-sm text-gemini-blue">tune</span>
+<span>Auto</span>
+</button>
+</div>
+<!-- Right Controls (Mic & Send Pill) -->
+<div class="flex items-center gap-1">
+<button class="p-2 text-gemini-text-sub hover:text-white rounded-full hover:bg-gemini-surface-hover transition-colors" title="Voice mode">
+<span class="material-symbols-outlined text-xl">mic</span>
+</button>
+<button class="w-9 h-9 rounded-full bg-gemini-text-main text-gemini-bg hover:bg-white flex items-center justify-center transition-all disabled:opacity-30 disabled:pointer-events-none active:scale-95" title="Send message">
+<span class="material-symbols-outlined text-lg font-bold">arrow_upward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Micro Privacy Guarantee -->
+<div class="text-center text-[11px] text-gemini-text-sub">
+          Syntropic runs tasks locally on your home rig. Zero cloud egress unless frontier models are invoked.
+        </div>
+</div>
+</div>
+</div>
+<script>
+    const textarea = document.getElementById('prompt-input');
+    if (textarea) {
+      textarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 160) + 'px';
+      });
+      textarea.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          if (this.value.trim().length > 0) {
+            this.value = '';
+            this.style.height = 'auto';
+          }
+        }
+      });
+    }
+  </script>
+
+
+</body></html>

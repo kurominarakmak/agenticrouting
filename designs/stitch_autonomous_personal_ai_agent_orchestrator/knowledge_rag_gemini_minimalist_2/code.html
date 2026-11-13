@@ -1,0 +1,620 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Syntropic Chat - Personal Knowledge &amp; RAG</title>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&amp;family=JetBrains+Mono:wght@400;500&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "gemini-bg": "#111317",
+            "gemini-surface": "#1a1c1f",
+            "gemini-surface-hover": "#282a2d",
+            "gemini-card": "#1e2023",
+            "gemini-border": "#27272a",
+            "gemini-text-main": "#e2e2e6",
+            "gemini-text-sub": "#8e918f",
+            "gemini-blue": "#c0c1ff",
+            "gemini-accent": "#c2e7ff",
+            "gemini-glow": "#7cacf8",
+            "gemini-emerald": "#4edea3"
+          },
+          fontFamily: {
+            sans: ["Inter", "sans-serif"],
+            mono: ["JetBrains Mono", "monospace"]
+          }
+        }
+      }
+    }
+  </script>
+<style>
+    @layer base {
+      html, body {
+        margin: 0;
+        padding: 0;
+        background-color: #111317;
+        color: #e2e2e6;
+        font-family: 'Inter', sans-serif;
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #282a2d;
+        border-radius: 9999px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: #37393d;
+      }
+    }
+  </style>
+<meta content="web_dashboard" name="shell-type"/></head>
+<body class="bg-gemini-bg min-h-screen flex overflow-hidden antialiased selection:bg-gemini-blue/20 selection:text-gemini-blue">
+<!-- COLLAPSIBLE MINIMAL LEFT SIDEBAR -->
+<aside class="w-64 shrink-0 bg-[#1a1c1f] border-r border-[#27272a] flex flex-col justify-between p-3.5 z-40 transition-all duration-300" id="sidebar">
+<div class="flex flex-col gap-3">
+<!-- Top Logo / Collapse Trigger -->
+<div class="flex items-center justify-between px-2 pt-1 pb-1">
+<div class="flex items-center gap-2.5">
+<div class="w-7 h-7 rounded-lg bg-gradient-to-tr from-indigo-500/20 to-purple-500/20 border border-indigo-400/30 flex items-center justify-center text-gemini-blue">
+<span class="material-symbols-outlined text-[19px]">spark</span>
+</div>
+<span class="font-medium text-sm tracking-tight text-white">Syntropic</span>
+</div>
+<button class="p-1.5 text-gemini-text-sub hover:text-white rounded-lg hover:bg-gemini-surface-hover transition-colors" title="Collapse sidebar">
+<span class="material-symbols-outlined text-[18px]">left_panel_close</span>
+</button>
+</div>
+<!-- New Chat / Action Pill -->
+<button class="flex items-center gap-2.5 w-full py-2.5 px-3.5 mt-1 rounded-full bg-gemini-card hover:bg-gemini-surface-hover border border-gemini-border text-sm font-medium text-gemini-text-main transition-colors shadow-sm group">
+<span class="material-symbols-outlined text-lg text-gemini-blue group-hover:rotate-90 transition-transform">add</span>
+<span>New chat</span>
+</button>
+<!-- Navigation Links -->
+<nav class="flex flex-col gap-0.5 mt-2 text-xs">
+<div class="px-3 py-1.5 text-[11px] font-medium tracking-wider uppercase text-gemini-text-sub">Recent</div>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gemini-surface-hover/70 text-gemini-text-sub hover:text-gemini-text-main text-[13px] transition-colors" href="#">
+<div class="flex items-center gap-2.5 truncate">
+<span class="material-symbols-outlined text-base">chat_bubble_outline</span>
+<span class="truncate">Frontend Telemetry &amp; MCP</span>
+</div>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gemini-surface-hover/70 text-gemini-text-sub hover:text-gemini-text-main text-[13px] transition-colors" href="#">
+<div class="flex items-center gap-2.5 truncate">
+<span class="material-symbols-outlined text-base">chat_bubble_outline</span>
+<span class="truncate">Mean Reversion Strategy</span>
+</div>
+</a>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gemini-surface-hover/70 text-gemini-text-sub hover:text-gemini-text-main text-[13px] transition-colors" href="#">
+<div class="flex items-center gap-2.5 truncate">
+<span class="material-symbols-outlined text-base">chat_bubble_outline</span>
+<span class="truncate">Qwen 2.5 Coder Worktree</span>
+</div>
+</a>
+<!-- Workspace Orchestration Links -->
+<div class="px-3 pt-4 pb-1 text-[11px] font-medium tracking-wider uppercase text-gemini-text-sub">Workspace</div>
+<a class="flex items-center justify-between px-3 py-2 rounded-xl hover:bg-gemini-surface-hover/70 text-gemini-text-sub hover:text-gemini-text-main text-[13px] transition-colors" href="#">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-base">task_alt</span>
+<span>Tasks</span>
+</div>
+<span class="text-[11px] px-1.5 py-0.5 rounded-full bg-gemini-emerald/15 text-gemini-emerald font-medium">4 active</span>
+</a>
+<!-- Active Knowledge Tab -->
+<a class="flex items-center justify-between px-3 py-2 rounded-xl bg-[#1e2023] text-white text-[13px] font-medium transition-colors border border-[#27272a]/60 shadow-sm" href="#">
+<div class="flex items-center gap-2.5">
+<span class="material-symbols-outlined text-base text-gemini-blue">auto_stories</span>
+<span>Knowledge</span>
+</div>
+<span class="text-[11px] px-2 py-0.5 rounded-full bg-gemini-blue/15 text-gemini-blue font-medium">14 repos</span>
+</a>
+</nav>
+</div>
+<!-- Sidebar Bottom Profile & Settings -->
+<div class="pt-2 border-t border-gemini-border flex flex-col gap-1">
+<a class="flex items-center gap-2.5 px-3 py-2 rounded-xl hover:bg-gemini-surface-hover text-gemini-text-sub hover:text-white text-[13px] transition-colors" href="#">
+<span class="material-symbols-outlined text-base">settings</span>
+<span>Settings</span>
+</a>
+<div class="flex items-center justify-between px-2.5 py-2 mt-1 rounded-xl bg-gemini-card border border-[#27272a]/50">
+<div class="flex items-center gap-2">
+<img alt="Architect Admin" class="w-7 h-7 rounded-full object-cover ring-1 ring-gemini-border" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_gHw5HQpDKOUkMAgGb25fwT0Y0u2tDSeSJNbXlJTlKwgM15BgEXaI_OIErEv6AouqtItZzcHDRv-ArCrHO9_mrLI-xPyII90d23Ea9CSXbG588UqSiFjSUE-D73BojMqPOxIi_LODQvsyyoJ2UlV86p8P2AEyBpc6cojUffQcRhYl3IcLrsudQqobL1l95ZElQhlWwm3GSORxKo77NBQZIY-jdOvhy8pbI2JUFGbQ"/>
+<div class="flex flex-col">
+<span class="text-xs font-medium text-gemini-text-main">Architect</span>
+<span class="text-[11px] text-gemini-text-sub">Pro workspace</span>
+</div>
+</div>
+<span class="w-2 h-2 rounded-full bg-gemini-emerald"></span>
+</div>
+</div>
+</aside>
+<!-- MAIN CHAT & DASHBOARD CONTAINER -->
+<div class="flex-1 flex flex-col h-screen relative bg-gemini-bg overflow-hidden">
+<!-- TOP BAR -->
+<header class="h-14 w-full shrink-0 flex items-center justify-between px-5 md:px-8 border-b border-[#27272a] bg-[#111317]/80 backdrop-blur-md z-20">
+<!-- Left: Model Dropdown Selector -->
+<div class="flex items-center gap-2">
+<button class="flex items-center gap-2 py-1.5 px-3 rounded-full hover:bg-gemini-surface text-gemini-text-main hover:text-white transition-all text-sm font-medium">
+<span class="text-gemini-blue font-semibold tracking-tight text-[15px] flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[17px] text-gemini-blue">spark</span>
+Syntropic Auto
+</span>
+<span class="material-symbols-outlined text-base text-gemini-text-sub">expand_more</span>
+</button>
+</div>
+<!-- Right: Status Pill & Profile -->
+<div class="flex items-center gap-3">
+<div class="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-gemini-surface border border-gemini-border text-xs text-gemini-text-sub">
+<span class="w-1.5 h-1.5 rounded-full bg-gemini-emerald"></span>
+<span class="font-normal text-[12px] text-gemini-text-main">Home Rig Active</span>
+</div>
+<button class="w-8 h-8 rounded-full hover:bg-gemini-surface text-gemini-text-sub hover:text-white flex items-center justify-center transition-colors">
+<span class="material-symbols-outlined text-lg">tune</span>
+</button>
+<img alt="Profile" class="w-8 h-8 rounded-full object-cover ring-1 ring-gemini-border" src="https://lh3.googleusercontent.com/aida-public/AB6AXuA_gHw5HQpDKOUkMAgGb25fwT0Y0u2tDSeSJNbXlJTlKwgM15BgEXaI_OIErEv6AouqtItZzcHDRv-ArCrHO9_mrLI-xPyII90d23Ea9CSXbG588UqSiFjSUE-D73BojMqPOxIi_LODQvsyyoJ2UlV86p8P2AEyBpc6cojUffQcRhYl3IcLrsudQqobL1l95ZElQhlWwm3GSORxKo77NBQZIY-jdOvhy8pbI2JUFGbQ"/>
+</div>
+</header>
+<!-- MAIN CONTENT STREAM -->
+<main class="flex-1 overflow-y-auto px-4 md:px-8 pt-6 pb-48">
+<div class="flex flex-col w-full max-w-5xl mx-auto pb-10">
+<!-- 1. HEADER & INTRO WITH STATS -->
+<section class="flex flex-col gap-3 pt-2 pb-6 border-b border-[#27272a]">
+<div class="flex items-center justify-between flex-wrap gap-3">
+<div class="flex items-center gap-2">
+<span class="text-[11px] font-mono uppercase tracking-wider text-gemini-blue font-semibold flex items-center gap-1.5">
+<span class="material-symbols-outlined text-[16px]">spark</span>
+Syntropic Local RAG
+</span>
+<span class="w-1 h-1 rounded-full bg-gemini-border"></span>
+<span class="text-[11px] font-mono uppercase tracking-wider text-gemini-emerald flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-gemini-emerald"></span>
+Memory Indexed
+</span>
+</div>
+<!-- Quick Stats Pill -->
+<div class="flex items-center gap-2 px-3 py-1.5 rounded-full bg-[#1e2023] border border-[#27272a] text-xs font-mono text-gemini-text-sub">
+<span class="text-gemini-text-main font-medium">14 Repositories</span>
+<span class="text-[#27272a]">·</span>
+<span class="text-gemini-text-main font-medium">3,420 Document Chunks</span>
+<span class="text-[#27272a]">·</span>
+<span class="text-gemini-emerald font-medium">0 Cloud Egress</span>
+</div>
+</div>
+<div class="mt-1">
+<h1 class="text-2xl sm:text-3xl font-semibold text-white tracking-tight">Personal Knowledge &amp; RAG</h1>
+<p class="text-sm text-gemini-text-sub mt-1.5 max-w-2xl leading-relaxed">
+Local vector embeddings, connected repos, and verified skill sets. Grounded in private worktrees with strict memory sandbox isolation.
+</p>
+</div>
+</section>
+<!-- 2. SEARCH & FILTER ROW (Gemini Clean Pill Aesthetic) -->
+<section class="flex flex-col gap-3.5 my-6">
+<div class="relative w-full">
+<span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-gemini-text-sub text-[20px] pointer-events-none">search</span>
+<input class="w-full bg-[#1e2023] hover:bg-[#282a2d] focus:bg-[#282a2d] text-gemini-text-main placeholder:text-gemini-text-sub text-sm pl-12 pr-28 py-3 rounded-full border border-[#27272a] focus:border-gemini-blue/60 outline-none transition-all shadow-sm" id="knowledge-search" placeholder="Search indexed documentation, codebase ASTs, or agent memory anchors..." type="text"/>
+<div class="absolute right-3.5 top-1/2 -translate-y-1/2 flex items-center gap-1.5">
+<kbd class="hidden sm:inline-block px-2 py-0.5 rounded-md bg-[#111317] border border-[#27272a] text-gemini-text-sub text-[11px] font-mono">⌘K</kbd>
+</div>
+</div>
+<!-- Filter Chips -->
+<div class="flex items-center gap-2 overflow-x-auto pb-1" id="filter-container">
+<button class="filter-pill active px-3.5 py-1.5 rounded-full bg-[#282a2d] text-white text-xs font-medium border border-transparent shadow-sm transition-all" data-filter="all">All Sources</button>
+<button class="filter-pill px-3.5 py-1.5 rounded-full bg-[#1e2023] hover:bg-[#282a2d] text-gemini-text-sub hover:text-white text-xs font-medium border border-[#27272a] transition-all" data-filter="repos">Code Repos</button>
+<button class="filter-pill px-3.5 py-1.5 rounded-full bg-[#1e2023] hover:bg-[#282a2d] text-gemini-text-sub hover:text-white text-xs font-medium border border-[#27272a] transition-all" data-filter="vaults">Research &amp; Vaults</button>
+<button class="filter-pill px-3.5 py-1.5 rounded-full bg-[#1e2023] hover:bg-[#282a2d] text-gemini-text-sub hover:text-white text-xs font-medium border border-[#27272a] transition-all" data-filter="memory">Agent Memory</button>
+<button class="filter-pill px-3.5 py-1.5 rounded-full bg-[#1e2023] hover:bg-[#282a2d] text-gemini-text-sub hover:text-white text-xs font-medium border border-[#27272a] transition-all" data-filter="skills">Verified Skills</button>
+</div>
+</section>
+<!-- 3. CONNECTED KNOWLEDGE SOURCES -->
+<section class="flex flex-col gap-4 mb-8" data-category="sources">
+<div class="flex items-center justify-between flex-wrap gap-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-gemini-blue text-[20px]">database</span>
+<h2 class="text-base font-semibold text-white">Connected Knowledge Sources</h2>
+<span class="px-2 py-0.5 rounded-full bg-[#1e2023] text-gemini-text-sub text-[11px] font-mono border border-[#27272a]">4 Mounted</span>
+</div>
+<button class="flex items-center gap-1.5 text-gemini-blue hover:text-white text-xs font-medium transition-colors px-3 py-1.5 rounded-full hover:bg-[#1e2023] border border-transparent hover:border-[#27272a]">
+<span class="material-symbols-outlined text-[16px]">add</span>
+<span>Mount New Source</span>
+</button>
+</div>
+<!-- Sources Grid -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
+<!-- Card 1: syntropic-core / main -->
+<div class="group flex flex-col justify-between p-4 rounded-xl bg-[#1e2023] hover:bg-[#282a2d] border border-[#27272a] transition-all shadow-sm">
+<div class="flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-[#111317] border border-[#27272a] flex items-center justify-center text-gemini-blue">
+<span class="material-symbols-outlined text-[18px]">fork_right</span>
+</div>
+<div>
+<h3 class="text-sm font-semibold text-white group-hover:text-gemini-blue transition-colors">syntropic-core / main</h3>
+<span class="text-[11px] text-gemini-text-sub">Git worktree</span>
+</div>
+</div>
+<span class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#111317] text-gemini-emerald border border-gemini-emerald/20 flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-gemini-emerald animate-pulse"></span>Live Watcher
+</span>
+</div>
+<p class="text-xs text-gemini-text-sub leading-relaxed mt-1">Full AST code embeddings, worktree watchers, and IPC sub-agent communications bus.</p>
+<div class="flex items-center flex-wrap gap-2 pt-2 border-t border-[#27272a]/60 text-[11px] font-mono">
+<span class="text-gemini-text-main bg-[#111317] px-2 py-0.5 rounded border border-[#27272a]">1,840 AST nodes</span>
+<span class="text-gemini-text-sub">Synced 4m ago</span>
+<span class="text-gemini-emerald bg-gemini-emerald/10 px-2 py-0.5 rounded border border-gemini-emerald/20 ml-auto">Read-only / Sandbox isolated</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 mt-2 border-t border-[#27272a]/40 text-xs">
+<span class="text-[11px] font-mono text-gemini-text-sub">Tree-sitter indexed</span>
+<div class="flex items-center gap-1.5">
+<button class="px-2.5 py-1 rounded-full bg-[#111317] hover:bg-[#37393d] text-gemini-text-main text-[11px] border border-[#27272a] transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">sync</span>Sync
+</button>
+<button class="px-2.5 py-1 rounded-full bg-[#111317] hover:bg-[#37393d] text-gemini-text-main text-[11px] border border-[#27272a] transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">folder_open</span>Browse
+</button>
+</div>
+</div>
+</div>
+<!-- Card 2: quant-strategies / backtest -->
+<div class="group flex flex-col justify-between p-4 rounded-xl bg-[#1e2023] hover:bg-[#282a2d] border border-[#27272a] transition-all shadow-sm">
+<div class="flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-[#111317] border border-[#27272a] flex items-center justify-center text-gemini-blue">
+<span class="material-symbols-outlined text-[18px]">candlestick_chart</span>
+</div>
+<div>
+<h3 class="text-sm font-semibold text-white group-hover:text-gemini-blue transition-colors">quant-strategies / backtest</h3>
+<span class="text-[11px] text-gemini-text-sub">Python repo</span>
+</div>
+</div>
+<span class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#111317] text-gemini-emerald border border-gemini-emerald/20 flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-gemini-emerald"></span>Live Sync
+</span>
+</div>
+<p class="text-xs text-gemini-text-sub leading-relaxed mt-1">VectorBT guardrails, statistical arbitrage signals, and historical order book execution models.</p>
+<div class="flex items-center flex-wrap gap-2 pt-2 border-t border-[#27272a]/60 text-[11px] font-mono">
+<span class="text-gemini-text-main bg-[#111317] px-2 py-0.5 rounded border border-[#27272a]">890 symbols</span>
+<span class="text-gemini-text-sub">Synced 12m ago</span>
+<span class="text-gemini-blue bg-gemini-blue/10 px-2 py-0.5 rounded border border-gemini-blue/20 ml-auto">Isolated AST</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 mt-2 border-t border-[#27272a]/40 text-xs">
+<span class="text-[11px] font-mono text-gemini-text-sub">NumPy &amp; Polars Vectorized</span>
+<div class="flex items-center gap-1.5">
+<button class="px-2.5 py-1 rounded-full bg-[#111317] hover:bg-[#37393d] text-gemini-text-main text-[11px] border border-[#27272a] transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">sync</span>Sync
+</button>
+<button class="px-2.5 py-1 rounded-full bg-[#111317] hover:bg-[#37393d] text-gemini-text-main text-[11px] border border-[#27272a] transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">folder_open</span>Browse
+</button>
+</div>
+</div>
+</div>
+<!-- Card 3: Personal Obsidian Vault -->
+<div class="group flex flex-col justify-between p-4 rounded-xl bg-[#1e2023] hover:bg-[#282a2d] border border-[#27272a] transition-all shadow-sm">
+<div class="flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-[#111317] border border-[#27272a] flex items-center justify-center text-gemini-accent">
+<span class="material-symbols-outlined text-[18px]">edit_note</span>
+</div>
+<div>
+<h3 class="text-sm font-semibold text-white group-hover:text-gemini-blue transition-colors">Personal Obsidian Vault</h3>
+<span class="text-[11px] text-gemini-text-sub">Markdown research</span>
+</div>
+</div>
+<span class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#111317] text-gemini-blue border border-gemini-blue/20 flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-gemini-blue"></span>Indexed
+</span>
+</div>
+<p class="text-xs text-gemini-text-sub leading-relaxed mt-1">Design decision records, distributed consensus memos, and trading system architectural notes.</p>
+<div class="flex items-center flex-wrap gap-2 pt-2 border-t border-[#27272a]/60 text-[11px] font-mono">
+<span class="text-gemini-text-main bg-[#111317] px-2 py-0.5 rounded border border-[#27272a]">690 notes</span>
+<span class="text-gemini-text-sub">Synced 1h ago</span>
+<span class="text-gemini-emerald bg-gemini-emerald/10 px-2 py-0.5 rounded border border-gemini-emerald/20 ml-auto">Read-only</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 mt-2 border-t border-[#27272a]/40 text-xs">
+<span class="text-[11px] font-mono text-gemini-text-sub">Markdown &amp; Wikilinks</span>
+<div class="flex items-center gap-1.5">
+<button class="px-2.5 py-1 rounded-full bg-[#111317] hover:bg-[#37393d] text-gemini-text-main text-[11px] border border-[#27272a] transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">sync</span>Sync
+</button>
+<button class="px-2.5 py-1 rounded-full bg-[#111317] hover:bg-[#37393d] text-gemini-text-main text-[11px] border border-[#27272a] transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">folder_open</span>Browse
+</button>
+</div>
+</div>
+</div>
+<!-- Card 4: SEC 10-K & Market Cache -->
+<div class="group flex flex-col justify-between p-4 rounded-xl bg-[#1e2023] hover:bg-[#282a2d] border border-[#27272a] transition-all shadow-sm">
+<div class="flex flex-col gap-2.5">
+<div class="flex items-center justify-between">
+<div class="flex items-center gap-2.5">
+<div class="w-8 h-8 rounded-lg bg-[#111317] border border-[#27272a] flex items-center justify-center text-amber-300">
+<span class="material-symbols-outlined text-[18px]">receipt_long</span>
+</div>
+<div>
+<h3 class="text-sm font-semibold text-white group-hover:text-gemini-blue transition-colors">SEC 10-K &amp; Market Cache</h3>
+<span class="text-[11px] text-gemini-text-sub">Financial filings</span>
+</div>
+</div>
+<span class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#111317] text-gemini-text-sub border border-[#27272a] flex items-center gap-1.5">
+<span class="w-1.5 h-1.5 rounded-full bg-amber-400/80"></span>Periodic pull
+</span>
+</div>
+<p class="text-xs text-gemini-text-sub leading-relaxed mt-1">Audited annual financial reports, Edgar pipeline extracts, and liquidity risk disclosure sections.</p>
+<div class="flex items-center flex-wrap gap-2 pt-2 border-t border-[#27272a]/60 text-[11px] font-mono">
+<span class="text-gemini-text-main bg-[#111317] px-2 py-0.5 rounded border border-[#27272a]">12 filings</span>
+<span class="text-gemini-text-sub">Synced today 09:30 AM</span>
+<span class="text-gemini-text-sub bg-[#111317] px-2 py-0.5 rounded border border-[#27272a] ml-auto">Local Cache</span>
+</div>
+</div>
+<div class="flex items-center justify-between pt-3 mt-2 border-t border-[#27272a]/40 text-xs">
+<span class="text-[11px] font-mono text-gemini-text-sub">XBRL / Tabular Chunks</span>
+<div class="flex items-center gap-1.5">
+<button class="px-2.5 py-1 rounded-full bg-[#111317] hover:bg-[#37393d] text-gemini-text-main text-[11px] border border-[#27272a] transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">sync</span>Sync
+</button>
+<button class="px-2.5 py-1 rounded-full bg-[#111317] hover:bg-[#37393d] text-gemini-text-main text-[11px] border border-[#27272a] transition-colors flex items-center gap-1">
+<span class="material-symbols-outlined text-[13px]">folder_open</span>Browse
+</button>
+</div>
+</div>
+</div>
+</div>
+</section>
+<!-- 4. REUSABLE AGENT SKILLS -->
+<section class="flex flex-col gap-4 mb-8" data-category="skills">
+<div class="flex items-center justify-between flex-wrap gap-2">
+<div class="flex items-center gap-2">
+<span class="material-symbols-outlined text-gemini-emerald text-[20px]">verified_user</span>
+<h2 class="text-base font-semibold text-white">Reusable Agent Skills</h2>
+<span class="text-xs font-mono text-gemini-text-sub">Deterministic Guardrails &amp; Tooling</span>
+</div>
+<button class="text-xs text-gemini-blue hover:text-white font-medium transition-colors">Manage Skills</button>
+</div>
+<div class="grid grid-cols-1 md:grid-cols-3 gap-3.5">
+<!-- Skill 1 -->
+<div class="p-4 rounded-xl bg-[#1e2023] hover:bg-[#282a2d] border border-[#27272a] transition-colors flex flex-col justify-between">
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<div class="w-8 h-8 rounded-lg bg-[#111317] border border-[#27272a] flex items-center justify-center text-gemini-emerald">
+<span class="material-symbols-outlined text-[18px]">fact_check</span>
+</div>
+<span class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-gemini-emerald/15 text-gemini-emerald font-medium">Verified: 100%</span>
+</div>
+<h3 class="text-sm font-semibold text-white mt-1">Vitest TDD Guardrail</h3>
+<p class="text-xs text-gemini-text-sub leading-relaxed">
+Enforces test assertion passing before worktree commit approval.
+</p>
+</div>
+<div class="flex items-center justify-between pt-3 mt-3 border-t border-[#27272a]/60 text-[11px]">
+<span class="text-gemini-emerald font-mono flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-gemini-emerald"></span>Enforced
+</span>
+<button class="text-gemini-blue hover:text-white transition-colors">Configure</button>
+</div>
+</div>
+<!-- Skill 2 -->
+<div class="p-4 rounded-xl bg-[#1e2023] hover:bg-[#282a2d] border border-[#27272a] transition-colors flex flex-col justify-between">
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<div class="w-8 h-8 rounded-lg bg-[#111317] border border-[#27272a] flex items-center justify-center text-gemini-blue">
+<span class="material-symbols-outlined text-[18px]">terminal</span>
+</div>
+<span class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-gemini-blue/15 text-gemini-blue font-medium">Verified</span>
+</div>
+<h3 class="text-sm font-semibold text-white mt-1">Webull MCP Market Feed</h3>
+<p class="text-xs text-gemini-text-sub leading-relaxed">
+Direct financial quote &amp; tick cache ingestion via MCP protocol.
+</p>
+</div>
+<div class="flex items-center justify-between pt-3 mt-3 border-t border-[#27272a]/60 text-[11px]">
+<span class="text-gemini-emerald font-mono flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-gemini-emerald"></span>Active IPC
+</span>
+<button class="text-gemini-blue hover:text-white transition-colors">Configure</button>
+</div>
+</div>
+<!-- Skill 3 -->
+<div class="p-4 rounded-xl bg-[#1e2023] hover:bg-[#282a2d] border border-[#27272a] transition-colors flex flex-col justify-between">
+<div class="flex flex-col gap-2">
+<div class="flex items-center justify-between">
+<div class="w-8 h-8 rounded-lg bg-[#111317] border border-[#27272a] flex items-center justify-center text-gemini-accent">
+<span class="material-symbols-outlined text-[18px]">neurology</span>
+</div>
+<span class="text-[11px] font-mono px-2 py-0.5 rounded-full bg-[#111317] text-gemini-text-sub border border-[#27272a]">Autonomous</span>
+</div>
+<h3 class="text-sm font-semibold text-white mt-1">Qwen Code Analysis</h3>
+<p class="text-xs text-gemini-text-sub leading-relaxed">
+Local AST comprehension &amp; automated refactoring runner.
+</p>
+</div>
+<div class="flex items-center justify-between pt-3 mt-3 border-t border-[#27272a]/60 text-[11px]">
+<span class="text-gemini-emerald font-mono flex items-center gap-1">
+<span class="w-1.5 h-1.5 rounded-full bg-gemini-emerald"></span>Local Ollama
+</span>
+<button class="text-gemini-blue hover:text-white transition-colors">Configure</button>
+</div>
+</div>
+</div>
+</section>
+<!-- 5. COLLAPSIBLE DRAWER: ADVANCED VECTOR & RAG PARAMETERS -->
+<section class="flex flex-col gap-3">
+<details class="group bg-[#1e2023] rounded-xl overflow-hidden border border-[#27272a]" open="">
+<summary class="flex items-center justify-between p-4 cursor-pointer hover:bg-[#282a2d] transition-colors list-none select-none">
+<div class="flex items-center gap-3">
+<div class="w-8 h-8 rounded-lg bg-[#111317] border border-[#27272a] flex items-center justify-center text-gemini-blue">
+<span class="material-symbols-outlined text-[18px]">tune</span>
+</div>
+<div>
+<h3 class="text-sm font-semibold text-white">Advanced Vector &amp; RAG Parameters</h3>
+<p class="text-xs text-gemini-text-sub">Local embedding model configuration, index parameters, and similarity metrics</p>
+</div>
+</div>
+<div class="flex items-center gap-2">
+<span class="text-[11px] font-mono text-gemini-text-sub hidden sm:inline-block">BGE-large-en-v1.5 · 1024-dim</span>
+<span class="material-symbols-outlined text-gemini-text-sub group-open:rotate-180 transition-transform">expand_more</span>
+</div>
+</summary>
+<div class="p-4 pt-3 border-t border-[#27272a] grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3.5 text-xs bg-[#1a1c1f]">
+<!-- Param 1 -->
+<div class="flex flex-col gap-1.5 p-3 rounded-lg bg-[#111317] border border-[#27272a]">
+<span class="text-[11px] text-gemini-text-sub uppercase font-mono tracking-wider">Embedding Model</span>
+<div class="flex items-center justify-between mt-0.5">
+<span class="font-mono text-white text-xs font-medium">BGE-large-en-v1.5</span>
+</div>
+<span class="text-[11px] text-gemini-emerald font-mono">1024 dimensions</span>
+</div>
+<!-- Param 2 -->
+<div class="flex flex-col gap-1.5 p-3 rounded-lg bg-[#111317] border border-[#27272a]">
+<span class="text-[11px] text-gemini-text-sub uppercase font-mono tracking-wider">HNSW Graph M</span>
+<div class="flex items-center justify-between mt-0.5">
+<span class="font-mono text-white text-xs font-medium">M = 16</span>
+<span class="text-[11px] font-mono text-gemini-text-sub">Bi-directional</span>
+</div>
+<span class="text-[11px] text-gemini-text-sub">Graph density balance</span>
+</div>
+<!-- Param 3 -->
+<div class="flex flex-col gap-1.5 p-3 rounded-lg bg-[#111317] border border-[#27272a]">
+<span class="text-[11px] text-gemini-text-sub uppercase font-mono tracking-wider">efSearch Parameter</span>
+<div class="flex items-center justify-between mt-0.5">
+<span class="font-mono text-white text-xs font-medium">efSearch = 64</span>
+<span class="text-[11px] font-mono text-gemini-emerald">Optimal</span>
+</div>
+<span class="text-[11px] text-gemini-text-sub">High recall trade-off</span>
+</div>
+<!-- Param 4 -->
+<div class="flex flex-col gap-1.5 p-3 rounded-lg bg-[#111317] border border-[#27272a]">
+<span class="text-[11px] text-gemini-text-sub uppercase font-mono tracking-wider">Distance Metric</span>
+<div class="flex items-center justify-between mt-0.5">
+<span class="font-mono text-white text-xs font-medium">Cosine Distance</span>
+<span class="text-[11px] font-mono text-gemini-blue">Normalized</span>
+</div>
+<span class="text-[11px] text-gemini-text-sub">Zero angle distortion</span>
+</div>
+</div>
+</details>
+</section>
+</div>
+</main>
+<!-- FLOATING GEMINI-STYLE PROMPT COMPOSER -->
+<div class="absolute bottom-0 left-0 right-0 z-30 pointer-events-none pb-5 pt-8 bg-gradient-to-t from-[#111317] via-[#111317]/95 to-transparent px-4 md:px-8">
+<div class="w-full max-w-3xl mx-auto flex flex-col gap-2.5 pointer-events-auto">
+<!-- Suggestion Chips -->
+<div class="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+<button class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1e2023]/90 hover:bg-[#282a2d] border border-[#27272a] text-xs text-gemini-text-main hover:text-white transition-all">
+<span class="material-symbols-outlined text-[15px] text-gemini-blue">show_chart</span>
+<span>Backtest strategy</span>
+</button>
+<button class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1e2023]/90 hover:bg-[#282a2d] border border-[#27272a] text-xs text-gemini-text-main hover:text-white transition-all">
+<span class="material-symbols-outlined text-[15px] text-gemini-emerald">folder_open</span>
+<span>Audit git worktree</span>
+</button>
+<button class="shrink-0 flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-[#1e2023]/90 hover:bg-[#282a2d] border border-[#27272a] text-xs text-gemini-text-main hover:text-white transition-all">
+<span class="material-symbols-outlined text-[15px] text-gemini-blue">sync_alt</span>
+<span>Re-index knowledge</span>
+</button>
+</div>
+<!-- Floating Pill Input Box -->
+<div class="bg-[#1e2023]/95 hover:bg-[#1e2023] focus-within:bg-[#1e2023] border border-[#27272a] focus-within:border-gemini-text-sub/50 rounded-3xl p-2.5 shadow-[0_8px_32px_rgba(0,0,0,0.5)] backdrop-blur-xl transition-all">
+<div class="px-3 pt-1">
+<textarea class="w-full bg-transparent border-0 text-[14px] text-gemini-text-main placeholder:text-gemini-text-sub focus:ring-0 focus:outline-none resize-none p-0 leading-relaxed" id="prompt-input" placeholder="Ask anything about connected repos, backtests, or codebases..." rows="1"></textarea>
+</div>
+<div class="flex items-center justify-between pt-2 px-1">
+<!-- Left Controls inside Input -->
+<div class="flex items-center gap-1">
+<button class="p-1.5 text-gemini-text-sub hover:text-white rounded-full hover:bg-[#282a2d] transition-colors" title="Attach file or code">
+<span class="material-symbols-outlined text-xl">add</span>
+</button>
+<button class="flex items-center gap-1.5 py-1 px-2.5 text-xs text-gemini-text-sub hover:text-white rounded-full hover:bg-[#282a2d] transition-colors">
+<span class="material-symbols-outlined text-sm text-gemini-blue">tune</span>
+<span>Auto</span>
+</button>
+</div>
+<!-- Right Controls (Mic & Send Pill) -->
+<div class="flex items-center gap-1">
+<button class="p-1.5 text-gemini-text-sub hover:text-white rounded-full hover:bg-[#282a2d] transition-colors" title="Voice mode">
+<span class="material-symbols-outlined text-xl">mic</span>
+</button>
+<button class="w-8 h-8 rounded-full bg-gemini-text-main text-gemini-bg hover:bg-white flex items-center justify-center transition-all disabled:opacity-30 disabled:pointer-events-none active:scale-95" title="Send message">
+<span class="material-symbols-outlined text-base font-bold">arrow_upward</span>
+</button>
+</div>
+</div>
+</div>
+<!-- Micro Privacy Guarantee -->
+<div class="text-center text-[11px] text-gemini-text-sub">
+Syntropic runs tasks locally on your home rig. Zero cloud egress unless frontier models are invoked.
+</div>
+</div>
+</div>
+</div>
+<!-- INTERACTIVE SCRIPTS -->
+<script>
+  // Simple client-side search & filter interaction
+  (function() {
+    const searchInput = document.getElementById('knowledge-search');
+    const filterButtons = document.querySelectorAll('.filter-pill');
+
+    filterButtons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        filterButtons.forEach(b => {
+          b.classList.remove('bg-[#282a2d]', 'text-white');
+          b.classList.add('bg-[#1e2023]', 'text-gemini-text-sub');
+        });
+        btn.classList.add('bg-[#282a2d]', 'text-white');
+        btn.classList.remove('bg-[#1e2023]', 'text-gemini-text-sub');
+      });
+    });
+
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        const query = e.target.value.toLowerCase().trim();
+        const cards = document.querySelectorAll('[data-category="sources"] .group, [data-category="skills"] .rounded-xl');
+        cards.forEach(card => {
+          const text = card.textContent.toLowerCase();
+          if (query === '' || text.includes(query)) {
+            card.style.display = 'flex';
+          } else {
+            card.style.display = 'none';
+          }
+        });
+      });
+    }
+
+    const textarea = document.getElementById('prompt-input');
+    if (textarea) {
+      textarea.addEventListener('input', function() {
+        this.style.height = 'auto';
+        this.style.height = Math.min(this.scrollHeight, 160) + 'px';
+      });
+      textarea.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+          e.preventDefault();
+          if (this.value.trim().length > 0) {
+            this.value = '';
+            this.style.height = 'auto';
+          }
+        }
+      });
+    }
+  })();
+</script>
+</body></html>

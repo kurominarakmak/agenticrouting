@@ -99,3 +99,7 @@ If Serve is enabled for the tailnet, this command creates a private Tailscale HT
 Run `python3 -m unittest discover -s tests -v`. See [verification](docs/current-verification.md) and [system boundaries](docs/current-architecture.md).
 
 Tasks are serial within one installed state to conserve local memory and prevent conflicting workers. Concurrent chat submissions are supported. A hard-crash child launch gate records process identity before execution; recovery terminates recorded processes and pauses interrupted work for inspection, without replaying external side effects. Coding sandboxes restrict writes, but Codex may still read host-user-accessible files: use trusted repositories. Artifact/test fingerprints detect worktree changes after verification. No merge, publication, trade, transfer or arbitrary external write executor is enabled.
+
+## React frontend preview
+
+A React + strict TypeScript frontend now lives under `frontend/`. Run `npm ci --prefix frontend` and `npm run build --prefix frontend` before an authorized installation. Python serves the static build; production needs no Node process. The original client remains available at `/legacy/`. See [modernization decisions, checks and limitations](docs/frontend-modernization.md) and [third-party notices](frontend/THIRD_PARTY_NOTICES.md). Changes in this working copy have not been installed into the running services.

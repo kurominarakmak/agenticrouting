@@ -16,3 +16,8 @@ __pycache__/
 /docs/implementation-plan.md
 /docs/build-vs-adopt.md
 /docs/subscription-compatibility.md
+/frontend/node_modules/
+/frontend/dist/
+/frontend/test-results/
+/frontend/playwright-report/
+/test-results/

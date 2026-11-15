@@ -129,6 +129,8 @@ def local_call(messages, schema=None, on_delta=None, model=None):
 
 
 def route(text, override=None):
+    # Normalize explicit request prefixes without treating capability questions as jobs.
+    text=re.sub(r"^\s*(?:i(?:'d| would) like (?:you )?to|i want (?:you )?to)\s+",'',text,flags=re.I)
     dimensions = {'mode':'chat','reasoning':'short','tools':[],'risk':'read-only',
                   'context':'conversation','context_characters':len(text),'runtime':'ollama',
                   'quota':'not-applicable','task_kind':'conversation','reasons':[]}
@@ -147,7 +149,7 @@ def route(text, override=None):
                           task_kind='quantitative' if re.search(r'backtest|mean.reversion',text,re.I) else ('coding' if coding else 'research'),
                           reasons=['Actionable work persists independently of the browser.'])
         if external:dimensions['blocked_reason']='External or irreversible actions have no enabled executor. Financial transactions are prohibited.'
-    elif re.match(r'^\s*(how|what|why|when|where|who|which|is|are|does|do|should)\b',text,re.I):
+    elif re.match(r'^\s*(how|what|why|when|where|who|which|is|are|does|do|should)\b',text,re.I) or re.match(r'^\s*(?:can|could|would|will) you\s+(?:please\s+)?(?:explain|describe|tell|clarify)\b',text,re.I):
         dimensions.update(reasoning='deep' if deep else 'short',reasons=['Question answered in chat; reasoning depth does not imply a background job.'])
     else:
         schema={'type':'object','properties':{'mode':{'type':'string','enum':['chat','job','lookup']}},'required':['mode'],'additionalProperties':False}
@@ -670,13 +672,23 @@ class Handler(BaseHTTPRequestHandler):
         url = urlsplit(self.path)
         if not self.valid_host():
             return self.send(403, {'error': 'Host refused'})
+        if url.path.startswith('/ui/'):
+            path=(ROOT/'frontend/dist'/url.path.removeprefix('/ui/')).resolve()
+            base=(ROOT/'frontend/dist').resolve()
+            if not path.is_relative_to(base):return self.send(404,{'error':'Not found'})
+            if path==base:path=base/'index.html'
+            if not path.is_file():return self.send(404,{'error':'Build frontend with npm run build --prefix frontend'})
+            import mimetypes
+            return self.send(200,path.read_bytes(),mimetypes.guess_type(path)[0] or 'application/octet-stream')
         if url.path in ['/assets/inter.ttf','/assets/jetbrains-mono.ttf']:
             return self.send(200,(ROOT/url.path[1:]).read_bytes(),'font/ttf')
         if url.path in ['/app.js','/components.js','/style.css']:
             suffix='text/css' if url.path.endswith('.css') else 'text/javascript'
             return self.send(200,(ROOT/url.path[1:]).read_bytes(),suffix+'; charset=utf-8')
-        if url.path == '/':
-            return self.send(200, (ROOT / 'index.html').read_bytes(), 'text/html; charset=utf-8')
+        if url.path in ['/', '/legacy/']:
+            modern=ROOT/'frontend/dist/index.html'
+            page=modern if url.path=='/' and modern.is_file() else ROOT/'index.html'
+            return self.send(200, page.read_bytes(), 'text/html; charset=utf-8')
         if not self.authorized():
             return self.send(401, {'error': 'Local service token required'})
         if url.path == '/api/state':

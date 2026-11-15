@@ -34,6 +34,8 @@ def deploy():
     for filename in ['app.py','services.py','workflows.py','mcp_bridge.py','child_runner.py','local_runner.py','index.html','style.css','app.js','components.js']:
         shutil.copy2(ROOT/filename,RUNTIME/filename)
     shutil.copytree(ROOT/'assets',RUNTIME/'assets',dirs_exist_ok=True)
+    if (ROOT/'frontend/dist').exists():
+        shutil.copytree(ROOT/'frontend/dist',RUNTIME/'frontend/dist',dirs_exist_ok=True)
     shutil.copytree(ROOT/'docs',RUNTIME/'docs',dirs_exist_ok=True)
     first_deploy=not (RUNTIME/'state').exists()
     if first_deploy and (ROOT/'state').exists():

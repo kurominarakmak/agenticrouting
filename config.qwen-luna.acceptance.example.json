@@ -1,0 +1,30 @@
+{
+  "profile": "optional isolated acceptance profile; merge only into a disposable config",
+  "providers": {
+    "qwen-local-acceptance": {
+      "type": "openai-compatible",
+      "base_url": "http://127.0.0.1:8791/v1",
+      "enabled": true,
+      "remote": false,
+      "models": ["empero-ai/Qwen3.8-9B-Distill"],
+      "max_output_tokens": 1600,
+      "task_call_limit": 8,
+      "temperature": 0.6,
+      "top_p": 0.95,
+      "capabilities": ["chat", "structured-output"],
+      "harnesses": []
+    }
+  },
+  "supervisor": {"enabled": true},
+  "roles": {
+    "supervisor": {"mode": "manual", "enabled": true, "backend": "api", "provider": "qwen-local-acceptance", "model": "empero-ai/Qwen3.8-9B-Distill"},
+    "planner": {"mode": "auto", "enabled": false},
+    "worker": {"mode": "manual", "enabled": true, "backend": "native", "runtime": "codex-chatgpt", "model": "gpt-6-luna", "reasoning_effort": "medium"},
+    "reviewer": {"mode": "auto", "enabled": false},
+    "researcher": {"mode": "auto", "enabled": false}
+  },
+  "codex_model": "gpt-6-luna",
+  "codex_reasoning_effort": "medium",
+  "native_call_budget": 4,
+  "native_task_call_budget": 4
+}

@@ -1,8 +1,11 @@
+import { AgentActivity } from "./AgentActivity";
+import { EventTimeline } from "./EventTimeline";
 import { useState, useEffect, useRef, type ReactNode } from "react";
 import { createRoot } from "react-dom/client";
 import { Button } from "./vendor/Button";
 import { api, stream, type Task, type Snapshot } from "./api";
 import { Prose, Json, Structured } from "./renderers";
+import { AgentSettings } from "./AgentSettings";
 
 import "./style.css";
 const columns = ["To Do", "In Progress", "In Review", "Blocked", "Done"];
@@ -67,6 +70,9 @@ function App() {
     [repo, setRepo] = useState("demo"),
     [drawer, setDrawer] = useState(false),
     [notifications, setNotifications] = useState(false),
+    [showActivity, setShowActivity] = useState(() =>
+      window.matchMedia("(min-width: 1080px)").matches,
+    ),
     [filter, setFilter] = useState("all"),
     [query, setQuery] = useState(""),
     [knowledge, setKnowledge] = useState<unknown>(null),
@@ -113,6 +119,9 @@ function App() {
           ...data.notifications.map((n) => n.id),
         );
         setS(data);
+        setRepo((current) => data.resources.repositories.includes(current)
+          ? current
+          : (data.resources.repositories[0] || ""));
         setError("");
       }
     } catch (e) {
@@ -154,6 +163,7 @@ function App() {
     return (
       <Button
         key={t.id}
+        data-task-id={t.id}
         className="task-card"
         onClick={() => setSelected(t.id)}
       >
@@ -167,7 +177,7 @@ function App() {
     );
   }
   async function send() {
-    if (busy || !prompt.trim()) return;
+    if (!s || busy || !prompt.trim()) return;
     setBusy(true);
     setLive("Selecting a compatible runtime…");
     setError("");
@@ -207,6 +217,7 @@ function App() {
       await refresh();
     }
   }
+  const linkedMessages=new Set<string>();
   return (
     <>
       <div className={drawer ? "shell sidebar-open" : "shell"}>
@@ -299,6 +310,16 @@ function App() {
             <span className="health">
               {s?.worker.online ? "● Home worker online" : "○ Worker offline"}
             </span>
+            {page === "Chat" && (
+              <Button
+                className="agent-activity-toggle"
+                aria-expanded={showActivity}
+                aria-controls="agent-activity"
+                onClick={() => setShowActivity(!showActivity)}
+              >
+                Agents
+              </Button>
+            )}
             <Button
               onClick={() => setNotifications(true)}
               aria-label="Notifications"
@@ -311,7 +332,16 @@ function App() {
               {error}
             </p>
           )}
-          <main id="main">
+          <main id="main" className={page === "Chat" && showActivity ? "with-agent-activity" : undefined}>
+            {page === "Chat" && showActivity && (
+              <AgentActivity
+                tasks={tasks.filter((task) => task.conversation === conversation)}
+                calls={s?.conversation === conversation ? s?.agent_calls ?? [] : []}
+                messages={s?.conversation === conversation ? s?.messages ?? [] : []}
+                busy={busy}
+                openTask={setSelected}
+              />
+            )}
             {page === "Chat" && (
               <div className="chat-stream">
                 {!s?.messages.length && !busy && (
@@ -326,7 +356,8 @@ function App() {
                   try {
                     meta = JSON.parse(m.meta || "{}");
                   } catch {}
-                  const linked = tasks.find((t) => t.id === m.task_id);
+                  const linked=m.role==="assistant"&&!linkedMessages.has(m.task_id||"")?tasks.find(t=>t.id===m.task_id):undefined;
+                    if(linked)linkedMessages.add(linked.id);
                   return (
                     <article key={m.id} className={"chat-message " + m.role}>
                       <span>{m.role === "user" ? "You" : "✳"}</span>
@@ -473,6 +504,17 @@ function App() {
                     <Json value={r} />
                   </article>
                 ))}
+                <h2>Configured provider adapters</h2>
+                <p className="subtle">Availability stays unknown until a configured endpoint is discovered. Quota is never guessed.</p>
+                {s?.registry.providers?.map((p) => (
+                  <article className="card" key={p.id}>
+                    <h2>{p.name} <Badge>{p.availability}</Badge></h2>
+                    <p>{p.provider_type} · {p.base_url}</p>
+                    <p>{p.discovery} · {p.authentication} · {p.billing} · quota {p.quota}</p>
+                    <p>Exact model IDs: {p.models.map((m) => `${m.id} (${m.source})`).join(", ") || "none configured or observed"}</p>
+                    <p>Requests per task: {p.task_call_limit}{p.budget_calls ? ` · total provider cap: ${p.budget_calls}` : ""}</p>
+                  </article>
+                ))}
                 <Json value={s?.routing_history} label="Routing decisions" />
               </>
             )}
@@ -594,6 +636,7 @@ function App() {
                       "codex-chatgpt",
                       "claude-subscription",
                       "glm-coding-plan",
+                      "dsh-local",
                     ].map((x) => (
                       <option key={x}>{x}</option>
                     ))}
@@ -619,6 +662,14 @@ function App() {
                 >
                   Enable browser alerts
                 </Button>
+                <AgentSettings
+                  value={s?.settings.orchestration}
+                  inventory={s?.registry.providers || []}
+                  runtimes={s?.registry.runtimes || []}
+                  repositories={s?.resources.repositories || []}
+                  save={(orchestration) => action("/api/settings", { orchestration })}
+                  refreshModels={async () => { await api(token, "/api/models?refresh=1"); await refresh(); }}
+                />
                 <p>
                   Private remote setup: <code>python3 ops.py remote</code>.
                   Requires Tailscale Serve and token authentication.
@@ -667,6 +718,7 @@ function App() {
                     "codex-chatgpt",
                     "claude-subscription",
                     "glm-coding-plan",
+                    "dsh-local",
                     ...(s?.registry.runtimes
                       .filter((r) => ["ollama", "lmstudio"].includes(r.harness))
                       .map((r) => r.id) || []),
@@ -686,7 +738,7 @@ function App() {
                 <Button
                   type="submit"
                   className="send"
-                  disabled={busy}
+                  disabled={!s || busy}
                   aria-label="Send message"
                 >
                   ↑
@@ -751,6 +803,23 @@ function App() {
             {task.route.runtime} · revision {task.revision} · attempts{" "}
             {task.attempts}
           </p>
+          <p className="subtle">Route source: {task.route.decision_source || "recorded on task"}{task.route.selection_reason ? ` · ${task.route.selection_reason}` : ""}</p>
+          {task.route.supervisor_decision && <Json value={task.route.supervisor_decision} label="Validated Supervisor proposal" />}
+          {task.delivery && <section className="card" aria-label="Prepared pull request">
+            <h2>Prepared change proposal</h2>
+            <p>{task.delivery.title}</p>
+            <p>Branch <code>{task.delivery.branch}</code> · revision {task.delivery.revision} · patch SHA-256 <code>{task.delivery.patch_sha256}</code></p>
+            <p>Status: {task.delivery.status}. Local artifacts are ready. {task.delivery.policy?.automatic_pr_after_verification && !task.delivery.policy?.require_commit_approval && !task.delivery.policy?.require_push_approval ? "The saved owner policy preauthorizes commit, push, and PR creation after verification." : "Commit, push, and PR creation require separate owner approval."}</p>
+            {task.delivery.policy?.require_owner_review_before_done && <p>Owner review is required before task completion.</p>}
+            {task.delivery.pr_url && <p><a href={task.delivery.pr_url} target="_blank" rel="noreferrer">Open confirmed pull request</a>{task.delivery.review_task_id ? ` · review task ${task.delivery.review_task_id}` : ""}</p>}
+            <div className="toolbar">
+              {task.delivery.publish_allowed && !task.delivery.commit_sha && <Button onClick={() => action("/api/task/action", { task_id: task.id, conversation: task.conversation, action: "commit_prepared" })}>Approve local commit</Button>}
+              {task.delivery.publish_allowed && task.delivery.commit_sha && !task.delivery.pushed_at && <Button onClick={() => action("/api/task/action", { task_id: task.id, conversation: task.conversation, action: "push_prepared" })}>Approve push</Button>}
+              {task.delivery.publish_allowed && task.delivery.pushed_at && !task.delivery.pr_url && <Button onClick={() => action("/api/task/action", { task_id: task.id, conversation: task.conversation, action: "create_pr" })}>Approve PR creation</Button>}
+              <Button onClick={async () => { for (const path of [task.delivery!.patch_path, task.delivery!.body_path]) { try { setArtifact({ path, text: await api<string>(token, "/api/artifact?path=" + encodeURIComponent(path)) }); } catch (e) { setError(String(e)); } } }}>Open prepared artifacts</Button>
+            </div>
+          </section>}
+          {task.route.task_kind === "pr-review" && <section className="card"><h2>Pull request review status</h2><p>Only GitHub state is read. Syntropic cannot merge or deploy.</p><Button onClick={() => action("/api/task/action", { task_id: task.id, conversation: task.conversation, action: "refresh_pr" })}>Refresh GitHub status</Button></section>}
           {task.error && <p role="alert">{task.error}</p>}
           <div className="toolbar">
             <Button
@@ -763,7 +832,7 @@ function App() {
             </Button>
             {[
               ...(task.approval === "pending" ? ["approve"] : []),
-              ...(task.status === "review" ? ["accept_review"] : []),
+              ...(task.status === "review" && task.route.task_kind !== "pr-review" ? ["accept_review"] : []),
               ...(["blocked", "failed", "cancelled", "triage"].includes(
                 task.status,
               )
@@ -838,6 +907,11 @@ function App() {
             />
           )}
           <Json value={task.runs} label="Execution and verification receipts" />
+          <EventTimeline
+            task={task.id}
+            revision={task.revision}
+            token={token}
+          />
           <h2>Revision activity</h2>
           {task.comments
             .slice(-30)

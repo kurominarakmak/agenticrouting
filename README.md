@@ -7,7 +7,9 @@ A working self-hosted chat application with durable background execution, based 
 Source and design assets are in this repository.
 
 ```sh
-cd agenticrouting
+# From the personal-ai-work repository root
+npm ci --prefix frontend
+npm run build --prefix frontend
 python3 ops.py install
 python3 ops.py status
 ```
@@ -29,7 +31,7 @@ For foreground diagnostics, stop the services and run the installed `app.py serv
 - Five board columns: **To Do → In Progress → In Review → Blocked → Done**. Internal statuses include planning, running, verifying, awaiting approval, paused, failed, cancelled and dependency waits. Failed/cancelled history remains filterable.
 - Sidebar active tasks above recent conversations. Chat, board and inspector all read the same persisted records. No invented percentages or quota values.
 - Durable Hermes tasks, atomic claims, isolated Git worktrees, external acceptance commands, logs, artifacts, cancellation, pause/resume, bounded owner-requested retries, review gates and follow-up revisions.
-- A capable subscription lead can create up to three read-only local analysis subtasks. Hermes dependencies gate the original task until handoffs arrive. Child execution is inference-only, depth is limited to one, and model output is never executed as a local command. This path was tested with real Codex and Ollama.
+- A capable subscription lead can create up to three read-only local analysis subtasks. Hermes dependencies gate the original task until handoffs arrive. Child execution uses optional capability-gated DSH read-only tools when recent exact-model evidence permits it, otherwise the existing inference path; depth is limited to one. Model output is never executed as a local command. See the [hybrid integration report](docs/hybrid-agent-integration-report.md) for real Luna Medium + DSH execution, evidence, limitations and deployment requirements.
 - Scoped retrieval over allowlisted text/code/documents, CSV/TSV samples, DOCX, PDF when `pdftotext` is available, and read-only SQLite schema metadata. SQLite FTS5 retrieval, source hashes, timestamps and explicit frontier-sharing scope; no cloud embeddings. Preferences, evidence and skills remain distinct typed memory.
 - Official MCP SDK client using the existing Hermes environment. Stdio and Streamable HTTP, paginated discovery, per-server credentials and explicit read-only tool allowlists. Financial transaction tools are denied independently of prompts.
 - Persistent notification inbox, opt-in browser alerts, and a durable optional authenticated notification-webhook outbox for closed-browser delivery. No push destination is enabled by default.
@@ -58,6 +60,51 @@ Edit the source `config.json`, then run `python3 ops.py install`.
 Quota remains `unknown` unless observed through a runtime error. No token-count-to-dollar estimate or unlimited entitlement is invented. Runtime selection checks compatibility and availability before applying conservative heuristics; outcome counts are retained, with small samples explicitly not treated as a quality benchmark. Failures do not automatically trigger another provider. Existing account-level extra-usage/billing settings are not silently modified or asserted to be controlled by this app.
 
 For GLM, configure `glm.enabled`, `plan_entitlement_confirmed`, an actually included `model`, and `confirmed_plan_models`. Put the user-provided plan key in the installed `state/secrets/glm.json` as `GLM_CODING_PLAN_KEY`, mode `0600`. The defaults contain no model name or entitlement assertion. Keys only enter that supported CLI's environment, never a custom inference API client, Codex, the verifier or an unrelated MCP process.
+
+## Provider-neutral Supervisor and orchestration
+
+The Supervisor can use a configured inference API to propose an intent, difficulty, bounded context request, and role plan. The app validates that proposal before routing. Accepted proposal intents are `answer`, `report`, `coding`, `research`, `lookup`, and `clarify`; malformed or unknown labels remain errors. The existing deterministic heuristic remains the named fallback. API adapters have no shell or repository-write path.
+
+Keep the four pieces of configuration distinct:
+
+- A **provider** is an explicitly configured endpoint adapter (`ollama`, `lmstudio`, `openai-compatible`, OpenAI Responses, or Anthropic Messages).
+- A **model** is the exact identifier accepted by that endpoint. The app does not translate or guess model IDs.
+- A **harness** is the execution mechanism. API providers can propose, plan, or review; repository edits require a compatible native coding harness such as the supported Codex CLI.
+- A **role** assigns a configured provider/model or harness to Supervisor, Planner, Worker, Reviewer, or Researcher. Manual role choices are snapshotted into new tasks; existing tasks keep their original assignment. A role choice does not grant permissions by itself.
+
+For a local OpenAI-compatible endpoint, add a provider to `config.json` or **Settings → AI providers and role assignments**:
+
+```json
+{
+  "providers": {
+    "local-compatible": {
+      "type": "openai-compatible",
+      "base_url": "http://127.0.0.1:1234/v1",
+      "enabled": true,
+      "remote": false,
+      "models": ["the-exact-model-id"],
+      "task_call_limit": 8,
+      "max_output_tokens": 1200,
+      "temperature": 0.6,
+      "top_p": 0.95,
+      "reasoning_efforts_by_model": {"the-exact-model-id": ["low", "medium"]},
+      "reasoning_parameter": "reasoning_effort"
+    }
+  },
+  "roles": {
+    "supervisor": {"mode": "manual", "enabled": true, "backend": "api", "provider": "local-compatible", "model": "the-exact-model-id", "reasoning_effort": "medium"},
+    "worker": {"mode": "manual", "enabled": true, "backend": "native", "runtime": "codex-chatgpt", "model": "the-exact-configured-codex-model", "reasoning_effort": "medium"}
+  }
+}
+```
+
+For remote providers, use the documented HTTPS endpoint, set `remote`, `share_context`, and (for metered services) `consent` explicitly, and configure finite `budget_calls`, `task_call_limit`, and `max_output_tokens`. Put the credential in an owner-only JSON file under `state/secrets/` with mode `0600`; reference a key as `provider.json#API_KEY`. Do not put a key in settings, a URL, a task prompt, or source control. The app refuses redirects and reports only provider status codes on HTTP errors. Configuring an endpoint or secret reference does not prove service access or billing entitlement.
+
+`max_provider_calls_per_task`, `max_native_calls_per_task`, `native_call_budget`, `max_iterations`, `max_wall_seconds`, and `max_concurrency` are separate owner limits. Independent task concurrency is one by default and can be raised to two; tasks sharing a dependency remain sequential. Native/API selection does not override the repository allowlist, worktree sandbox, verifier, Reviewer, or owner gates. Supervisor permissions are proposals, not grants.
+
+The default repository delivery policy prepares a patch and description locally and requires separate owner approval for commit, push, and PR creation. `automatic_pr_after_verification` only preauthorizes delivery when both `require_commit_approval` and `require_push_approval` are explicitly false; task-specific instructions prohibiting commit, push, or publication still block automatic delivery. Every action rechecks revision and patch hashes and records an intent/result journal. Ambiguous push or GitHub responses are reconciled by readback; there is no automatic retry, merge, or deployment.
+
+See [the provider-agnostic orchestration report](docs/provider-agnostic-orchestrator-report.md) for implementation boundaries, available evidence, failure cases, focused regressions, and remaining limitations.
 
 ## Knowledge, tools and permissions
 
@@ -102,4 +149,4 @@ Tasks are serial within one installed state to conserve local memory and prevent
 
 ## React frontend preview
 
-A React + strict TypeScript frontend now lives under `frontend/`. Run `npm ci --prefix frontend` and `npm run build --prefix frontend` before an authorized installation. Python serves the static build; production needs no Node process. The original client remains available at `/legacy/`. See [modernization decisions, checks and limitations](docs/frontend-modernization.md) and [third-party notices](frontend/THIRD_PARTY_NOTICES.md). Changes in this working copy have not been installed into the running services.
+A React + strict TypeScript frontend now lives under `frontend/`. Run `npm ci --prefix frontend` and `npm run build --prefix frontend` before an authorized installation. Python serves the static build; production needs no Node process. The original client remains available at `/legacy/`. See [modernization decisions, checks and limitations](docs/frontend-modernization.md) and [third-party notices](frontend/THIRD_PARTY_NOTICES.md).

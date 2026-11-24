@@ -9,6 +9,8 @@ import sqlite3
 import ssl
 import subprocess
 import time
+import threading
+import control
 import urllib.parse
 import urllib.request
 import zipfile
@@ -16,6 +18,7 @@ import xml.etree.ElementTree as ET
 
 A = None
 _CACHE = (0, {})
+_DISCOVER_LOCK=threading.Lock()
 
 
 def bind(app):
@@ -40,33 +43,139 @@ def bind(app):
         CREATE VIRTUAL TABLE IF NOT EXISTS paw_chunks USING fts5(source_id UNINDEXED, ordinal UNINDEXED, text);
         CREATE TABLE IF NOT EXISTS paw_memory(id INTEGER PRIMARY KEY, kind TEXT, text TEXT, frontier INTEGER DEFAULT 0, created REAL);
         CREATE TABLE IF NOT EXISTS paw_tool_audit(id INTEGER PRIMARY KEY, server TEXT, tool TEXT, outcome TEXT, created REAL);
+        CREATE TABLE IF NOT EXISTS paw_pr_delivery(task_id TEXT PRIMARY KEY,revision INTEGER NOT NULL,branch TEXT NOT NULL,title TEXT NOT NULL,body_path TEXT NOT NULL,patch_path TEXT NOT NULL,patch_sha256 TEXT NOT NULL,prepared_at REAL NOT NULL,publish_allowed INTEGER NOT NULL,status TEXT NOT NULL,changed_files TEXT NOT NULL,commit_sha TEXT,commit_actor TEXT,commit_at REAL,push_actor TEXT,pushed_at REAL,pr_actor TEXT,pr_url TEXT,pr_at REAL,action_log TEXT NOT NULL DEFAULT '{}');
         ''')
+        for column in ['response_sha256','arguments_sha256']:
+            if column not in {r[1] for r in c.execute('PRAGMA table_info(paw_tool_audit)')}:c.execute('ALTER TABLE paw_tool_audit ADD COLUMN '+column+' TEXT')
         existing={r[1] for r in c.execute('PRAGMA table_info(paw_notifications)')}
         for column,ddl in {'delivered':'INTEGER NOT NULL DEFAULT 0','delivery_attempts':'INTEGER NOT NULL DEFAULT 0','delivery_error':'TEXT'}.items():
             if column not in existing:c.execute('ALTER TABLE paw_notifications ADD COLUMN '+column+' '+ddl)
+        if 'review_task_id' not in {r[1] for r in c.execute('PRAGMA table_info(paw_pr_delivery)')}:c.execute('ALTER TABLE paw_pr_delivery ADD COLUMN review_task_id TEXT')
+        if 'action_log' not in {r[1] for r in c.execute('PRAGMA table_info(paw_pr_delivery)')}:c.execute("ALTER TABLE paw_pr_delivery ADD COLUMN action_log TEXT NOT NULL DEFAULT '{}'")
 
 
 def settings():
+    result={'routing':'auto','review_before_done':False,'notifications':True,
+            'orchestration':orchestration_settings()}
+    with A.db() as c:result.update({r['key']:json.loads(r['value']) for r in c.execute('SELECT * FROM paw_settings') if r['key']!='orchestration'})
+    # References are identifiers, not credentials, but hide them from snapshots and browser state.
+    safe=json.loads(json.dumps(result))
+    for spec in safe.get('orchestration',{}).get('providers',{}).values():
+        if 'secret_ref' in spec:spec['credential_configured']=bool(spec.pop('secret_ref'))
+    return safe
+
+
+def orchestration_settings():
+    """Internal owner policy. Never contains secret values; references point into state/secrets."""
+    result={'providers':{},'roles':{name:{'mode':'auto'} for name in ['supervisor','planner','worker','reviewer','researcher']},
+            'provider_priority':[],'excluded_providers':[],
+            'policy':{'max_iterations':2,'max_concurrency':1,'max_provider_calls_per_task':8,'max_native_calls_per_task':4,'native_call_budget':A.CONFIG.get('native_call_budget',0),'max_wall_seconds':300},
+            'pr_policy':{}}
+    result['providers'].update({k:dict(v) for k,v in (A.CONFIG.get('providers',{}) or {}).items() if isinstance(v,dict)})
+    result['roles'].update({k:dict(v) for k,v in (A.CONFIG.get('roles',{}) or {}).items() if isinstance(v,dict)})
+    result['provider_priority']=list(A.CONFIG.get('provider_priority',[]))
+    stored=None
     with A.db() as c:
-        result = {'routing': 'auto', 'review_before_done': False, 'notifications': True}
-        result.update({r['key']: json.loads(r['value']) for r in c.execute('SELECT * FROM paw_settings')})
+        row=c.execute("SELECT value FROM paw_settings WHERE key='orchestration'").fetchone()
+        if row:stored=json.loads(row['value'])
+    if isinstance(stored,dict):
+        result['providers'].update(stored.get('providers',{}))
+        result['roles'].update(stored.get('roles',{}))
+        result['policy'].update(stored.get('policy',{}))
+        result['pr_policy'].update({repo: policy for repo, policy in stored.get('pr_policy',{}).items()
+                                    if repo in A.CONFIG.get('repositories',{})})
+        if 'provider_priority' in stored:result['provider_priority']=stored['provider_priority']
+        if 'excluded_providers' in stored:result['excluded_providers']=stored['excluded_providers']
     return result
 
 
 def update_settings(data):
-    allowed = {'routing': ['auto','local-only','codex-chatgpt','claude-subscription','glm-coding-plan'],
+    if not isinstance(data,dict) or not data:
+        raise ValueError('Settings object is required')
+    allowed = {'routing': ['auto','local-only','codex-chatgpt','claude-subscription','glm-coding-plan','dsh-local'],
                'review_before_done': [True, False], 'notifications': [True, False]}
-    if not data or any(k not in allowed or v not in allowed[k] for k,v in data.items()):
+    if any(k!='orchestration' and (k not in allowed or v not in allowed[k]) for k,v in data.items()):
         raise ValueError('Unsupported setting')
+    if 'orchestration' in data:
+        value=data['orchestration']
+        if not isinstance(value,dict) or set(value)-{'providers','roles','policy','provider_priority','excluded_providers','pr_policy'}:
+            raise ValueError('Unsupported orchestration configuration fields')
+        import providers
+        current=orchestration_settings()
+        normalized=json.loads(json.dumps(current))
+        if 'providers' in value:
+            if not isinstance(value['providers'],dict) or len(value['providers'])>30:raise ValueError('Provider registry must be a bounded object')
+            clean={}
+            for name,spec in value['providers'].items():
+                if not isinstance(spec,dict):raise ValueError('Provider configuration must be an object')
+                # Browser snapshots hide owner-only secret references. Omission while editing
+                # keeps an existing reference; changing it requires a new owner-supplied ref.
+                clean[name]=providers.validate_provider(name,normalized['providers'].get(name,{})|spec)
+            normalized['providers'].update(clean)
+        if 'roles' in value:
+            if not isinstance(value['roles'],dict) or set(value['roles'])-{'supervisor','planner','worker','reviewer','researcher'}:raise ValueError('Unknown agent role')
+            for role,spec in value['roles'].items():
+                if not isinstance(spec,dict) or set(spec)-{'mode','backend','provider','model','runtime','reasoning_effort','enabled'}:raise ValueError('Unsupported role configuration field')
+                if spec.get('mode','auto') not in ['auto','manual']:raise ValueError('Role mode must be auto or manual')
+                if 'enabled' in spec and not isinstance(spec['enabled'],bool):raise ValueError('Role enabled flag must be boolean')
+                backend=spec.get('backend')
+                if backend is not None and backend not in ['api','native','dsh']:raise ValueError('Unsupported role backend')
+                for key in ('provider','model','runtime','reasoning_effort'):
+                    if key in spec and (not isinstance(spec[key],str) or not 1<=len(spec[key])<=200):raise ValueError('Role selection values must be bounded strings')
+                if role=='worker' and backend in ['api','dsh']:raise ValueError('Inference-only and read-only runtimes cannot execute repository changes')
+                if spec.get('mode')=='manual':
+                    if backend=='api' and (spec.get('provider') not in normalized['providers'] or not spec.get('model')):raise ValueError('Manual API roles need a configured provider and exact model ID')
+                    if backend=='native' and spec.get('runtime') not in ['codex-chatgpt','claude-subscription','glm-coding-plan']:raise ValueError('Manual native roles need a supported coding harness')
+                if spec.get('reasoning_effort'):
+                    if backend=='native':
+                        if spec.get('runtime')!='codex-chatgpt':raise ValueError('This native harness has no declared reasoning-effort control')
+                        exact_model=spec.get('model') or A.CONFIG.get('codex_model')
+                        supported=A.CONFIG.get('codex_reasoning_efforts_by_model',{}).get(exact_model,[])
+                        if supported and spec['reasoning_effort'] not in supported:raise ValueError('Reasoning effort is not supported for the selected native model')
+                    elif backend=='api':
+                        p=normalized['providers'].get(spec.get('provider'),{});supported=p.get('reasoning_efforts_by_model',{}).get(spec.get('model'),[])
+                        if spec['reasoning_effort'] not in supported:raise ValueError('Reasoning effort must be declared for the selected provider model')
+                    else:raise ValueError('Reasoning effort cannot be configured for an unspecified backend')
+                normalized['roles'][role]=dict(spec)
+        if 'policy' in value:
+            policy=value['policy']
+            if not isinstance(policy,dict) or set(policy)-{'max_iterations','max_concurrency','max_provider_calls_per_task','max_native_calls_per_task','native_call_budget','max_wall_seconds'}:raise ValueError('Unsupported policy fields')
+            bounds={'max_iterations':(1,3),'max_concurrency':(1,2),'max_provider_calls_per_task':(1,30),'max_native_calls_per_task':(1,30),'native_call_budget':(0,100),'max_wall_seconds':(15,3600)}
+            for key,(low,high) in bounds.items():
+                if key in policy and (type(policy[key]) is not int or not low<=policy[key]<=high):raise ValueError('Invalid bounded policy value for '+key)
+            normalized['policy'].update(policy)
+        if 'provider_priority' in value:
+            seq=value['provider_priority'];known=set(normalized['providers'])|{'codex-chatgpt','claude-subscription','glm-coding-plan','dsh-local'}
+            if not isinstance(seq,list) or len(seq)>30 or any(x not in known for x in seq):raise ValueError('Provider priority must reference configured providers or harnesses')
+            normalized['provider_priority']=seq
+        if 'excluded_providers' in value:
+            seq=value['excluded_providers'];known=set(normalized['providers'])|{'codex-chatgpt','claude-subscription','glm-coding-plan','dsh-local'}
+            if not isinstance(seq,list) or len(seq)>30 or any(x not in known for x in seq):raise ValueError('Provider exclusions must reference configured providers or harnesses')
+            normalized['excluded_providers']=seq
+        if 'pr_policy' in value:
+            policies=value['pr_policy'];known=set(A.CONFIG.get('repositories',{}))
+            if not isinstance(policies,dict) or set(policies)-known:raise ValueError('PR policies must use allowlisted repository IDs')
+            clean={}
+            for repo,spec in policies.items():
+                flags={'require_commit_approval','require_push_approval','automatic_pr_after_verification','require_owner_review_before_done'}
+                if not isinstance(spec,dict) or set(spec)-flags or any(not isinstance(v,bool) for v in spec.values()):raise ValueError('Invalid per-repository PR policy')
+                clean[repo]=spec
+            normalized['pr_policy'].update(clean)
+        data=dict(data);data['orchestration']=normalized
     with A.db() as c:
         for k,v in data.items():
             c.execute('INSERT OR REPLACE INTO paw_settings VALUES(?,?)', (k,json.dumps(v)))
+    global _CACHE
+    _CACHE=(0,{})
     return settings()
 
 
 def notify(task_id, kind, text):
     with A.db() as c:
         c.execute('INSERT INTO paw_notifications(task_id,kind,text,created) VALUES(?,?,?,?)',(task_id,kind,text[:2000],time.time()))
+        if kind=='approval':
+            pending=c.execute('SELECT approval FROM paw_jobs WHERE task_id=?',(task_id,)).fetchone()
+            if pending and pending[0]=='pending':control.emit(task_id,'approval.requested',{'activity':'Owner approval required'},source_key='pending-approval',conn=c)
 
 
 def stage(task_id, name, activity='', error=None):
@@ -74,6 +183,7 @@ def stage(task_id, name, activity='', error=None):
         c.execute('UPDATE paw_jobs SET stage=?,activity=?,error=? WHERE task_id=?',(name,activity[:2000],error,task_id))
         if activity:
             A.KB.add_comment(c,task_id,'executor',activity[:2000])
+        control.emit(task_id,{'planning':'planning.started','verifying':'verification.started','done':'task.completed','failed':'task.failed','waiting_dependency':'subtask.dispatched','paused':'task.paused','review':'approval.requested'}.get(name,'task.'+name),{'activity':activity},conn=c)
 
 
 def http_json(url, body=None, timeout=3):
@@ -83,7 +193,7 @@ def http_json(url, body=None, timeout=3):
         return json.load(r)
 
 
-def discover(force=False):
+def _discover_unlocked(force=False):
     global _CACHE
     if not force and time.time()-_CACHE[0]<20:
         return _CACHE[1]
@@ -92,9 +202,11 @@ def discover(force=False):
     auth=False
     try:auth='Logged in using ChatGPT' in A.command([codex,'login','status']) if codex else False
     except (OSError,subprocess.SubprocessError):pass
-    rows.append({'id':'codex-chatgpt','name':'Codex CLI','harness':'codex','available':auth,
+    budget=control.native_budget();auth_available=auth and budget['remaining']>0
+    codex_configured=bool(A.CONFIG.get('codex_model') and A.CONFIG.get('codex_reasoning_effort'))
+    rows.append({'id':'codex-chatgpt','name':'Codex CLI','harness':'codex','available':auth_available and codex_configured,'execution_budget':budget,
                  'installed':bool(codex and Path(codex).is_file()),'authentication':'ChatGPT' if auth else 'Sign in with codex login',
-                 'models':[A.CONFIG['codex_model']] if A.CONFIG.get('codex_model') else [],'model_source':'configuration; availability verified per turn',
+                 'reasoning_effort':A.CONFIG.get('codex_reasoning_effort'),'models':[A.CONFIG['codex_model']] if A.CONFIG.get('codex_model') else [],'model_source':'explicit configuration' if codex_configured else 'unconfigured; no default model inferred',
                  'capabilities':['reasoning','read-only','workspace-write','planning'],'tools':['filesystem','git','tests'],
                  'quota':'unknown','billing':'subscription','reliability':'observed in local evidence; no comparative ranking'})
     claude=A.CONFIG.get('claude') or shutil.which('claude')
@@ -102,9 +214,10 @@ def discover(force=False):
     try:ca=json.loads(A.command([claude,'--restricted','--setting-sources','','--strict-mcp-config','--mcp-config','{"mcpServers":{}}','auth','status'])) if claude else {}
     except (ValueError,OSError,subprocess.SubprocessError):pass
     supported=bool(ca.get('loggedIn') and ca.get('apiProvider')=='firstParty' and ca.get('authMethod') in ['oauth_token','claude.ai'])
-    rows.append({'id':'claude-subscription','name':'Claude Code','harness':'claude','available':supported,
+    claude_configured=bool(A.CONFIG.get('claude_model'))
+    rows.append({'id':'claude-subscription','name':'Claude Code','harness':'claude','available':supported and claude_configured,
                  'installed':bool(claude),'authentication':'first-party OAuth; plan allowance unknown' if supported else 'Isolated CLI profile has no usable subscription login; authenticate through the official Claude flow without importing tokens',
-                 'models':[A.CONFIG['claude_model']] if A.CONFIG.get('claude_model') else [],'model_source':'official CLI default unless configured',
+                 'models':[A.CONFIG['claude_model']] if A.CONFIG.get('claude_model') else [],'model_source':'explicit configuration' if claude_configured else 'unconfigured; no default model inferred',
                  'capabilities':['reasoning','read-only','workspace-write'],'tools':['filesystem'],
                  'quota':'unknown','billing':'subscription','reliability':'not assumed from login alone'})
     models=[]
@@ -129,23 +242,57 @@ def discover(force=False):
               'authentication':'Supported Z.AI Coding Plan profile configured' if glm_ready else 'Disabled until a dedicated plan key and confirmed model entitlement are configured'},
              {'id':'hermes','name':'Hermes task kernel','harness':'hermes','available':True,'capabilities':['durable-queue','dependencies'],
               'tools':[],'quota':'not applicable','billing':'local','revision':A.CONFIG['hermes_commit']}]
+    dsh=A.CONFIG.get('dsh',{})
+    capability=control.capability('dsh-local',dsh.get('model') or A.CONFIG.get('local_model'),'scoped-analysis')
+    configured=bool(dsh.get('enabled') and Path(dsh.get('python','')).is_file() and capability['eligible'])
+    rows.append({'id':'dsh-local','name':'DSH local read-only agent','harness':'dsh','available':configured,
+                 'capabilities':['local-analysis','read-only','scoped-tools'] if configured else [],'tools':['scoped-read-file'] if configured else [],
+                 'capability_evidence':capability,'models':[dsh.get('model') or A.CONFIG.get('local_model')],'quota':'local compute','billing':'local',
+                 'authentication':'Loopback model only; tool use is checked per run' if configured else 'Disabled until an SDK environment and a verified tool model are explicitly configured'})
     with A.db() as c:
         outcomes=[dict(x) for x in c.execute('SELECT j.route,j.kind,j.stage,j.error,j.attempts,t.status FROM paw_jobs j JOIN tasks t ON t.id=j.task_id')]
+    evidence_catalog=control.catalog()
     for row in rows:
+        row['verified_capability_classes']=[x for x in evidence_catalog if x['runtime']==row['id']]
         matched=[x for x in outcomes if json.loads(x['route']).get('runtime')==row['id']]
         row['outcomes']={'completed':sum(x['status']=='done' for x in matched),'failed':sum(x['stage']=='failed' for x in matched),
                          'blocked':sum(x['status']=='blocked' for x in matched),'attempts':sum(x['attempts'] for x in matched),
                          'sample_size':len(matched),'scope':'local observations only; not a benchmark of model quality'}
-    _CACHE=(time.time(),{'runtimes':rows,'observed_at':time.time()})
+    import providers
+    provider_rows=providers.discover(force=force)
+    _CACHE=(time.time(),{'runtimes':rows,'providers':provider_rows,'observed_at':time.time()})
     return _CACHE[1]
 
 
+def discover(force=False):
+    # Serialize probes so concurrent UI polls cannot multiply native auth subprocesses.
+    with _DISCOVER_LOCK:return _discover_unlocked(force)
+
+
+def local_candidate(dimension):
+    spec=A.CONFIG.get('dsh',{});model=spec.get('model') or A.CONFIG.get('local_model')
+    if not spec.get('enabled'):return None
+    task_class=dimension.get('required_capability','scoped-analysis')
+    evidence=control.capability('dsh-local',model,task_class)
+    if not spec.get('enabled') or not Path(spec.get('python','')).is_file() or not evidence['eligible']:return None
+    return {'runtime':'dsh-local','model':model,'required_capability':task_class,'capability_evidence':evidence,
+            'selection_reason':'Exact local model has recent repeated acceptance for '+task_class+'; no comparative ranking is inferred.'}
+
+
 def select_runtime(dimension, override=None):
+    orchestration=orchestration_settings()
+    excluded=set(orchestration.get('excluded_providers',[]))
     policy=override or settings()['routing']
-    if policy not in ['auto','local-only','codex-chatgpt','claude-subscription','glm-coding-plan'] and not policy.startswith(('ollama:','lmstudio:')):
+    if policy not in ['auto','local-only','codex-chatgpt','claude-subscription','glm-coding-plan','dsh-local'] and not policy.startswith(('ollama:','lmstudio:')):
         raise ValueError('Override must be an actual compatible runtime')
+    if policy in excluded or policy.startswith(('ollama:','lmstudio:')) and policy.split(':',1)[0] in excluded:
+        return dimension|{'runtime':'unavailable','blocked_reason':'The selected provider or harness is excluded by owner policy.'}
     local=dimension['mode']=='chat' and dimension['reasoning']=='short'
     if dimension['mode']=='lookup':return dimension
+    if dimension['mode']=='job' and dimension['risk']=='read-only' and dimension['reasoning']!='deep' and not dimension.get('blocked_reason') and policy in ['auto','local-only','dsh-local']:
+        candidate=local_candidate(dimension)
+        if candidate:return dimension|candidate
+    if policy=='dsh-local':return dimension|{'runtime':'unavailable','blocked_reason':'No recent compatible DSH capability evidence for this task class.'}
     if policy=='local-only' and not local:
         return dimension|{'runtime':'unavailable','blocked_reason':'Local-only mode excludes subscription execution; no compatible local tool harness is configured.'}
     if local and policy in ['auto','local-only']:
@@ -154,16 +301,17 @@ def select_runtime(dimension, override=None):
         if dimension['mode']!='chat':
             return dimension|{'runtime':'unavailable','blocked_reason':'This local inference model has no write/tool harness.'}
         return dimension|{'runtime':policy}
-    candidates=[r for r in discover()['runtimes'] if r['billing']=='subscription' and r['available'] and r['id'] in A.CONFIG.get('enabled_harnesses',['codex-chatgpt','claude-subscription'])]
+    if control.native_budget()['remaining']==0:
+        return dimension|{'runtime':'unavailable','blocked_reason':'Finite native execution budget is exhausted or not configured; no automatic provider fallback.'}
+    candidates=[r for r in discover()['runtimes'] if r['billing']=='subscription' and r['available'] and r['id'] in A.CONFIG.get('enabled_harnesses',['codex-chatgpt','claude-subscription']) and r['id'] not in excluded]
     required={'reasoning'} | ({'workspace-write'} if dimension['mode']=='job' else {'read-only'})
     valid=[r for r in candidates if required.issubset(r['capabilities']) and (policy=='auto' or r['id']==policy)]
     if not valid:
         return dimension|{'runtime':'unavailable','blocked_reason':'No authenticated compatible subscription runtime is available. Sign in locally; metered fallback is disabled.'}
-    # Prefer the verified harness for repository work; CLI-only reasoning can use either supported subscription.
-    def reliability(r):
-        o=r.get('outcomes',{});n=o.get('completed',0)+o.get('failed',0)
-        return o.get('completed',0)/n if n>=5 else .5
-    valid.sort(key=lambda r:(-reliability(r),0 if r['id']=='codex-chatgpt' else 1))
+    # Use explicit owner priority; do not rank providers by company or model name.
+    priority=orchestration.get('provider_priority') or A.CONFIG.get('enabled_harnesses',[])
+    priority=[x for x in priority if x not in excluded]
+    valid.sort(key=lambda r:priority.index(r['id']) if r['id'] in priority else len(priority))
     return dimension|{'runtime':valid[0]['id'],'quota':'unknown','selection_reason':'Matched required capabilities '+', '.join(sorted(required))+'; subscription login observed; outcome sample sizes retained; no quota visibility or claim of optimality.'}
 
 
@@ -289,6 +437,7 @@ def inventory(repo):
 
 
 def mcp_registry():
+    refresh_mcp_config()
     configured=A.CONFIG.get('mcp_servers',{})
     rows=[]
     for name,spec in configured.items():
@@ -350,14 +499,29 @@ def deliver_notifications():
         with A.db() as c:c.execute('UPDATE paw_notifications SET delivered=?,delivery_attempts=delivery_attempts+1,delivery_error=? WHERE id=?',(delivered,error,item['id']))
 
 
+def refresh_mcp_config():
+    path=getattr(A,'CONFIG_PATH',None)
+    if path is not None and path.exists() and path.stat().st_mtime_ns!=getattr(A,'CONFIG_STAT',None):
+        servers=json.loads(path.read_text()).get('mcp_servers',{})
+        if not isinstance(servers,dict):raise ValueError('Invalid owner MCP configuration')
+        A.CONFIG['mcp_servers']=servers;A.CONFIG_STAT=path.stat().st_mtime_ns
+
+
 def mcp_request(server,action='list',tool=None,arguments=None):
+    refresh_mcp_config()
+    if not isinstance(server,str) or len(server)>128 or action not in ['list','call']:raise ValueError('Invalid MCP request')
+    if action=='call' and (not isinstance(tool,str) or not re.fullmatch(r'[A-Za-z0-9_.:-]{1,128}',tool) or not isinstance(arguments or {},dict)):raise ValueError('Invalid MCP tool arguments')
+    def deny(message):
+        with A.db() as c:c.execute('INSERT INTO paw_tool_audit(server,tool,outcome,created) VALUES(?,?,?,?)',(server,tool or 'tools/list','denied',time.time()))
+        raise ValueError(message)
     spec=A.CONFIG.get('mcp_servers',{}).get(server)
-    if not spec or not spec.get('enabled'):raise ValueError('MCP server is not configured and enabled')
+    if not spec or not spec.get('enabled'):deny('MCP server is not configured and enabled')
     if action=='call':
         permission=spec.get('allowed_tools',{}).get(tool)
-        if permission!='read':raise ValueError('Tool is not explicitly authorized read-only')
+        if permission!='read':deny('Tool is not explicitly authorized read-only')
+        if re.search(r'(?:place|submit|create|cancel)[_-]?(?:order|trade)|(?:^|[_-])(?:buy|sell|transfer|withdraw|deposit)(?:$|[_-])',tool,re.I):deny('Financial transaction tools are prohibited')
         if spec.get('finance') and re.search(r'(order|trade|buy|sell|transfer|withdraw|deposit|execute|cancel)',tool,re.I):
-            raise ValueError('Financial transactions are prohibited')
+            deny('Financial transactions are prohibited')
     executable=A.CONFIG.get('mcp_python',str(Path(A.CONFIG['hermes_source'])/'venv/bin/python'))
     body={'server':spec,'action':action,'tool':tool,'arguments':arguments or {}}
     child_env=A.clean_env()
@@ -377,12 +541,28 @@ def mcp_request(server,action='list',tool=None,arguments=None):
     body['server']['headers']={k:resolve(v) for k,v in spec.get('headers',{}).items()}
     body['server'].pop('allowed_tools',None)
     try:
-        process=subprocess.Popen([executable,str(A.ROOT/'mcp_bridge.py')],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,env=child_env,start_new_session=True)
+        process=subprocess.Popen([executable,str(A.ROOT/'mcp_bridge.py')],stdin=subprocess.PIPE,stdout=subprocess.PIPE,stderr=subprocess.PIPE,text=True,env=child_env,start_new_session=not getattr(A,'MCP_PARENT_GROUP',False))
         try:stdout,_=process.communicate(json.dumps(body),timeout=35)
         finally:
-            if process.poll() is None:A.terminate(process)
+            if process.poll() is None:
+                if not getattr(A,'MCP_PARENT_GROUP',False):A.terminate(process)
+                else:
+                    process.terminate()
+                    try:process.wait(timeout=2)
+                    except subprocess.TimeoutExpired:process.kill();process.wait()
         if process.returncode or len(stdout)>2_000_000:raise ValueError('MCP connection, authorization or output-size check failed; inspect local server configuration')
         data=json.loads(stdout)
+        def scrub(value):
+            if isinstance(value,str):
+                for secret in secret_values.values():
+                    if isinstance(secret,str) and len(secret)>4:
+                        value=value.replace(secret,'[redacted]');plain=secret.removeprefix('Bearer ')
+                        if len(plain)>4:value=value.replace(plain,'[redacted]')
+                return value
+            if isinstance(value,list):return [scrub(v) for v in value]
+            if isinstance(value,dict):return {k:scrub(v) for k,v in value.items()}
+            return value
+        data=scrub(data)
         if 'error' in data:raise ValueError(data['error'])
         if action=='list':
             data['tools']=[t|{'authorized':spec.get('allowed_tools',{}).get(t['name'])=='read'} for t in data.get('tools',[])]
@@ -390,7 +570,12 @@ def mcp_request(server,action='list',tool=None,arguments=None):
         outcome='success'
         return data
     finally:
-        with A.db() as c:c.execute('INSERT INTO paw_tool_audit(server,tool,outcome,created) VALUES(?,?,?,?)',(server,tool or 'tools/list',locals().get('outcome','failed'),time.time()))
+        with A.db() as c:
+            response_hash=hashlib.sha256(json.dumps(data.get('result'),sort_keys=True).encode()).hexdigest() if locals().get('outcome')=='success' and action=='call' else None
+            argument_hash=hashlib.sha256(json.dumps(arguments or {},sort_keys=True).encode()).hexdigest()
+            audit=c.execute('INSERT INTO paw_tool_audit(server,tool,outcome,created,response_sha256,arguments_sha256) VALUES(?,?,?,?,?,?)',(server,tool or 'tools/list',locals().get('outcome','failed'),time.time(),response_hash,argument_hash))
+            if response_hash:data['provenance']={'kind':'mcp','audit_id':audit.lastrowid,'server':server,'tool':tool,'sha256':response_hash}
+
 
 
 def tool_lookup(text):
@@ -408,3 +593,11 @@ def tool_lookup(text):
     if not any(x['server']==selected.get('server') and x['name']==selected.get('tool') for x in inventory):raise ValueError('Local tool selection was not authorized')
     result=mcp_request(selected['server'],'call',selected['tool'],selected['arguments'])
     return {'answer':json.dumps(result.get('result',result),ensure_ascii=False,indent=2),'sources':[{'type':'tool','server':result['server'],'tool':selected['tool'],'retrieved_at':result['retrieved_at']}], 'tool_result':result}
+
+def validate_mcp_source(source):
+    refresh_mcp_config()
+    spec=A.CONFIG.get('mcp_servers',{}).get(source['server'],{})
+    if not spec.get('enabled') or spec.get('allowed_tools',{}).get(source['tool'])!='read':raise ValueError('MCP source permission was revoked')
+    with A.db() as c:row=c.execute('SELECT * FROM paw_tool_audit WHERE id=?',(source['audit_id'],)).fetchone()
+    if not row or row['outcome']!='success' or row['server']!=source['server'] or row['tool']!=source['tool'] or row['response_sha256']!=source['sha256']:raise ValueError('MCP provenance does not match an actual authorized tool result')
+    return True

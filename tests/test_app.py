@@ -41,7 +41,16 @@ prompt=sys.stdin.read()
 if mode=='slow':
  while not (root/'release').exists():time.sleep(.1)
 if mode=='fail':sys.exit(7)
-Path('greeting.py').write_text("def greet(name): return 'Hello, '+(name or 'friend')+'!'\\n")
+if mode=='parallel':
+ marker=root/('started-'+Path.cwd().name);marker.write_text(str(__import__('os').getpid()))
+ deadline=time.time()+8
+ while len(list(root.glob('started-*')))<2 and time.time()<deadline:time.sleep(.05)
+ if len(list(root.glob('started-*')))<2:sys.exit(8)
+if mode=='review-fix':
+ counter=root/'worker-count';count=int(counter.read_text())+1 if counter.exists() else 1;counter.write_text(str(count))
+ definition=(\"def greet(name):\\n    \\\"\\\"\\\"Return a friendly greeting.\\\"\\\"\\\"\\n    return 'Hello, '+(name or 'friend')+'!'\\n\" if count>1 else \"def greet(name): return 'Hello, '+(name or 'friend')+'!'\\n\")
+else:definition=\"def greet(name): return 'Hello, '+(name or 'friend')+'!'\\n\"
+Path('greeting.py').write_text(definition)
 Path(args[args.index('-o')+1]).write_text('Fixture claims success')
 ''' % sys.executable)
         self.fake.chmod(0o700)
@@ -49,6 +58,13 @@ Path(args[args.index('-o')+1]).write_text('Fixture claims success')
         self.verify.write_text("import runpy\ngreet=runpy.run_path('greeting.py')['greet']\nassert greet('Ada')=='Hello, Ada!'\nassert greet('')=='Hello, friend!'\nprint('Acceptance passed')\n")
         config = json.loads((app.ROOT / 'config.json').read_text())
         config['codex'] = str(self.fake)
+        config['codex_model'] = 'fixture-native-model'
+        config['codex_reasoning_effort'] = 'medium'
+        # Deterministic harness fixtures must never contact the host's local inference model.
+        config['local_model'] = 'fixture-local-model'
+        config['supervisor'] = {'enabled': False}
+        config['native_call_budget'] = 100
+        config['native_task_call_budget'] = 30
         config['enabled_harnesses'] = ['codex-chatgpt']
         config['knowledge_roots'] = {}
         config['timeout'] = 15
@@ -56,8 +72,14 @@ Path(args[args.index('-o')+1]).write_text('Fixture claims success')
         self.config = self.root / 'config.json'
         self.config.write_text(json.dumps(config))
         self.token = app.setup(self.config, self.state)
+        # Legacy deterministic tests cover completion without a repository human-review gate.
+        # New focused policy tests explicitly turn the gate back on.
+        app.services.update_settings({'orchestration':{'pr_policy':{'demo':{'require_owner_review_before_done':False}}}})
         self.processes = []
         self.server = app.ThreadingHTTPServer(('127.0.0.1', 0), app.Handler)
+        self.server.daemon_threads = False
+        self.server.block_on_close = True
+        self.server._closing = False
         app.Handler.token = self.token
         self.thread = threading.Thread(target=self.server.serve_forever, daemon=True)
         self.thread.start()
@@ -69,8 +91,11 @@ Path(args[args.index('-o')+1]).write_text('Fixture claims success')
                 p.terminate()
                 try:p.wait(timeout=5)
                 except subprocess.TimeoutExpired:p.kill();p.wait()
+        self.server._closing = True
         self.server.shutdown()
         self.server.server_close()
+        self.thread.join(timeout=5)
+        self.assertFalse(self.thread.is_alive(), 'HTTP server did not stop before disposable state cleanup')
         self.temp.cleanup()
 
     def request(self, method, path, data=None, auth=True, origin=None, host=None):

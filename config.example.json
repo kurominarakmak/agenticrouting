@@ -1,14 +1,17 @@
 {
   "hermes_source": "~/.hermes/hermes-agent",
   "hermes_commit": "9adc6071904dba099b667700f3ec177b3fb95eca",
-  "local_model": "lfm2.5-thinking:latest",
+  "local_model": null,
   "codex": "codex",
-  "codex_model": "gpt-6.1-sol",
+  "codex_model": null,
   "timeout": 300,
   "repositories": {
     "demo": {
       "path": "demo/repo",
-      "verify": ["python3", "demo/verify.py"]
+      "verify": [
+        "python3",
+        "demo/verify.py"
+      ]
     }
   },
   "claude": "claude",
@@ -17,6 +20,26 @@
     "claude-subscription",
     "glm-coding-plan"
   ],
+  "providers": {
+    "ollama": {
+      "type": "ollama",
+      "base_url": "http://127.0.0.1:11434",
+      "enabled": true,
+      "remote": false,
+      "models": [],
+      "max_output_tokens": 1200,
+      "task_call_limit": 8,
+      "capabilities": ["chat"],
+      "harnesses": []
+    }
+  },
+  "roles": {
+    "supervisor": {"mode": "auto", "enabled": true},
+    "planner": {"mode": "auto", "enabled": false},
+    "worker": {"mode": "auto", "enabled": true},
+    "reviewer": {"mode": "auto", "enabled": false},
+    "researcher": {"mode": "auto", "enabled": false}
+  },
   "max_attempts": 3,
   "remote_origin": "",
   "knowledge_roots": {
@@ -47,5 +70,14 @@
     "model": null,
     "confirmed_plan_models": [],
     "secret_file": "glm.json"
-  }
+  },
+  "dsh": {
+    "enabled": false,
+    "python": "/absolute/path/to/dsh-venv/bin/python",
+    "verified_tool_models": [],
+    "model": null
+  },
+  "codex_reasoning_effort": null,
+  "native_call_budget": 0,
+  "native_task_call_budget": 4
 }

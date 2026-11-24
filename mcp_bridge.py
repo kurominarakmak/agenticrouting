@@ -25,15 +25,30 @@ async def main(request):
             streams=await stack.enter_async_context(streamable_http_client(spec['url'],http_client=client))
         session=await stack.enter_async_context(ClientSession(streams[0],streams[1],read_timeout_seconds=25))
         await session.initialize()
-        if request['action']=='list':
-            tools=[];cursor=None
+        async def inventory():
+            tools=[];cursor=None;seen=set()
             for _ in range(10):
-                result=await session.list_tools(params=types.PaginatedRequestParams(cursor=cursor) if cursor else None)
-                tools.extend(x.model_dump(mode='json',by_alias=True) for x in result.tools)
-                cursor=result.next_cursor
-                if not cursor:break
-            return {'tools':tools}
+                page=await session.list_tools(params=types.PaginatedRequestParams(cursor=cursor) if cursor else None)
+                tools.extend(page.tools);cursor=page.next_cursor
+                if not cursor:return tools
+                if cursor in seen:raise ValueError('Repeated MCP pagination cursor')
+                seen.add(cursor)
+            raise ValueError('MCP pagination limit reached')
+        if request['action']=='list':return {'tools':[x.model_dump(mode='json',by_alias=True) for x in await inventory()]}
         if request['action']=='call':
+            from jsonschema import Draft202012Validator
+            listed=await inventory()
+            tool=next((t for t in listed if t.name==request['tool']),None)
+            if tool is None:raise ValueError('Unknown MCP tool')
+            schema=tool.model_dump(mode='json',by_alias=True)['inputSchema']
+            def refs(value):
+                if isinstance(value,dict):
+                    if '$ref' in value and not str(value['$ref']).startswith('#/'):raise ValueError('Remote schema references refused')
+                    for v in value.values():refs(v)
+                elif isinstance(value,list):
+                    for v in value:refs(v)
+            if len(json.dumps(schema))>50000:raise ValueError('MCP argument schema too large')
+            refs(schema);Draft202012Validator.check_schema(schema);Draft202012Validator(schema).validate(request.get('arguments',{}))
             result=await session.call_tool(request['tool'],request.get('arguments',{}))
             return {'result':result.model_dump(mode='json',by_alias=True)}
         raise ValueError('Unsupported MCP operation')
@@ -43,7 +58,10 @@ if __name__=='__main__':
     try:
         result=asyncio.run(asyncio.wait_for(main(json.load(sys.stdin)),30))
         print(json.dumps(result))
-    except Exception:
+    except Exception as failure:
         # Server exceptions may contain credentials or URLs; return a bounded public error.
-        print(json.dumps({'error':'MCP negotiation, authorization or tool call failed'}))
+        from jsonschema.exceptions import ValidationError
+        def invalid(exc):
+            return isinstance(exc,ValidationError) or any(invalid(child) for child in getattr(exc,'exceptions',[]))
+        print(json.dumps({'error':'MCP argument validation failed' if invalid(failure) else 'MCP negotiation, authorization or tool call failed','error_code':'invalid_arguments' if invalid(failure) else 'unavailable'}))
         sys.exit(1)

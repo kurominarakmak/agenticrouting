@@ -1,0 +1,16 @@
+diff --git a/explorer.py b/explorer.py
+index 03ce0d6..b043a6b 100644
+--- a/explorer.py
++++ b/explorer.py
+@@ -1,2 +1,10 @@
++import os
++
++
+ def visible_entries(paths, show_hidden=False):
+-    return sorted(paths)
++    entries = [
++        path
++        for path in paths
++        if show_hidden or not os.path.basename(path).startswith(".")
++    ]
++    return sorted(entries, key=lambda path: os.path.basename(path).casefold())

@@ -1,12 +1,39 @@
-import { lazy, Suspense } from "react";
+import { Component, lazy, Suspense, type ReactNode } from "react";
 const RichProse = lazy(() =>
   import("./prose").then((m) => ({ default: m.Prose })),
 );
+class RichTextBoundary extends Component<
+  { text: string; children: ReactNode },
+  { failed: boolean }
+> {
+  state = { failed: false };
+  static getDerivedStateFromError() {
+    return { failed: true };
+  }
+  render() {
+    return this.state.failed ? (
+      <>
+        <pre>{this.props.text}</pre>
+        <p role="status">
+          Rich formatting is unavailable. Your workspace and saved work remain
+          accessible.
+        </p>
+        <button type="button" onClick={() => location.reload()}>
+          Reload formatting
+        </button>
+      </>
+    ) : (
+      this.props.children
+    );
+  }
+}
 export function Prose({ text }: { text: string }) {
   return (
-    <Suspense fallback={<pre>{text}</pre>}>
-      <RichProse text={text} />
-    </Suspense>
+    <RichTextBoundary text={text}>
+      <Suspense fallback={<pre>{text}</pre>}>
+        <RichProse text={text} />
+      </Suspense>
+    </RichTextBoundary>
   );
 }
 export function Json({

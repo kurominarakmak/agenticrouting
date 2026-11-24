@@ -1,0 +1,1 @@
+Implement scorer.py from rules.json. Expose score(value, maximum) and grade(value, maximum). Reject nonpositive maximum with ValueError; clamp percentage to 0..100; grade using configured thresholds. Inspect the skill and fixtures; independently test boundary, invalid and clamped inputs.

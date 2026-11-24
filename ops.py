@@ -31,7 +31,7 @@ def plist(mode):
 
 def deploy():
     RUNTIME.mkdir(parents=True,exist_ok=True,mode=0o700)
-    for filename in ['app.py','services.py','workflows.py','mcp_bridge.py','child_runner.py','local_runner.py','index.html','style.css','app.js','components.js']:
+    for filename in ['app.py','control.py','profiling.py','services.py','workflows.py','mcp_bridge.py','child_runner.py','local_runner.py','dsh_runner.py','dsh_tools.py','external_mcp.py','providers.py','supervisor.py','pr_delivery.py','output_safety.py','index.html','style.css','app.js','components.js']:
         shutil.copy2(ROOT/filename,RUNTIME/filename)
     shutil.copytree(ROOT/'assets',RUNTIME/'assets',dirs_exist_ok=True)
     if (ROOT/'frontend/dist').exists():
